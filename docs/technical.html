@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>document.documentElement.classList.add("js")</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGMP_GWAS Technical</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<section class="pagehead">
+  <div class="wrap">
+    
+    <h1 class="display">Technical</h1>
+    <p class="lede">The methods in full, the caches, every setting, and how the code is laid out. For where each column comes from, see the <a href="index.html#columns">column guide</a>.</p>
+
+  </div>
+</section>
+
+<div class="docgrid">
+<aside class="side"><nav class="toc" aria-label="On this page">
+      <a href="#selection"><b>01</b>Study selection</a><a href="#variants"><b>02</b>Variant IDs</a><a href="#annotation"><b>03</b>Annotation</a>
+      <a href="#records"><b>04</b>Records</a><a href="#qc"><b>05</b>Quality checks</a><a href="#queue"><b>06</b>Curation queue</a>
+      <a href="#unmapped"><b>07</b>Unmapped variants</a><a href="#caches"><b>08</b>Caches</a><a href="#settings"><b>09</b>Settings</a>
+      <a href="#reproducibility"><b>10</b>Reproducibility</a><a href="#layout"><b>11</b>Code layout</a>
+    </nav></aside>
+<div class="doc">
+
+<h2 id="selection"><span class="n">01</span>Study selection</h2>
+<p>Selection works on study populations: one row of the GWAS Catalog ancestry file, which is one stage (initial or replication) of one study. Each row takes the first route that applies:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Route</th><th>Rule</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Explicit</td><td>Broad ancestral category matches <code>Africa|Greater Middle Eastern</code> (case-insensitive)</td><td>explicit</td></tr>
+<tr><td>Label</td><td>Category is <code>NR</code> or <code>Other</code>, as whole words</td><td>unresolved</td></tr>
+<tr><td>Country</td><td>A country of recruitment or origin is African (<code>workflow/config/regions.yaml</code>, with aliases)</td><td>unresolved</td></tr>
+<tr><td>Description</td><td>The row's own sample description names African or diaspora samples. Only for studies with no explicit or label row, so multi-ancestry studies are not pulled in by a passing mention.</td><td>unresolved</td></tr>
+</tbody></table></div>
+<p>Associations are then joined to the selected populations by study accession. Unresolved records are kept, flagged, and passed to the curation queue.</p>
+
+<h2 id="variants"><span class="n">02</span>Variant IDs</h2>
+<p>The Catalog's <code>SNPS</code> field is split into tokens and each is classified: <strong>rsid</strong> (kept), <strong>merged_updated</strong> (replaced by the current rsID), <strong>synonym</strong> (<code>rsA/rsB</code>, resolved to the current rsID), <strong>positional</strong> (converted where safe, below), <strong>interaction</strong> (<code>rs1 x rs2</code>, excluded) and <strong>other</strong> (HLA alleles, structural variants, excluded).</p>
+<h3>Converting positional IDs</h3>
+<p>dbSNP is dense enough that a position alone often matches some variant by chance, so the conversion is conservative:</p>
+<ol>
+  <li><strong>Genome build per paper.</strong> Up to 25 positions from the paper are looked up on GRCh38 and GRCh37 (Ensembl <code>/overlap/region</code>). The build where variants carrying the reported allele are found clearly more often (at least 50% of the sample, and 1.5 times the other build) is the paper's build. With no clear build, the paper's positions stay unconverted.</li>
+  <li><strong>One unique match.</strong> A position is accepted only if exactly one rsID starts there and lists the reported risk allele (and the reference and alternative alleles when the ID gives them).</li>
+  <li><strong>Genes</strong> come from the same lookup, named genes first. The mapped gene is built in the Catalog's style: genes the variant falls in, otherwise the nearest named gene on each side within 500 kb.</li>
+</ol>
+<p>Positions Ensembl rejects as invalid for the build (for example beyond the end of a chromosome) are cached as having no match, so they are not retried.</p>
+
+<h2 id="annotation"><span class="n">03</span>Annotation</h2>
+<p><strong>Genes.</strong> Each Ensembl gene ID gets its name and description from Ensembl (<code>/lookup/id</code>, GRCh38 then GRCh37 for retired IDs), and its UniProt accession and function from reviewed Swiss-Prot entries that cross-reference it, then UniProt ID mapping, then UniProt search.</p>
+<p><strong>Consequence.</strong> Where the Catalog gives no <code>CONTEXT</code>, Ensembl VEP's most severe consequence over all transcripts on the primary GRCh38 assembly is used, with up/downstream calls written as <code>intergenic_variant</code> as the Catalog does. On 600 variants that do have a Catalog <code>CONTEXT</code>, this agreed exactly for 91%; the rest are borderline cases such as <code>intron_variant</code> against <code>non_coding_transcript_exon_variant</code>.</p>
+<p><strong>Regions.</strong> Recruitment countries are mapped to AGMP regions with <code>workflow/config/regions.yaml</code>; when none maps, the broad ancestral category is used.</p>
+
+<h2 id="records"><span class="n">04</span>Records</h2>
+<p>A record is one variant, one trait, one study population and one gene. Identical records are reduced to one, keeping the smallest p-value. With <code>--previous</code>, <code>is_new</code> is false for variants found in the previous files, matched on both the final and the reported ID.</p>
+
+<h2 id="qc"><span class="n">05</span>Quality checks</h2>
+<p><code>qc.tsv</code> lists every check. FAIL checks stop the export; WARN checks do not.</p>
+<div class="table-wrap"><table><thead><tr><th>Check</th><th>Level</th><th>Fails or warns when</th></tr></thead><tbody id="qcBody"></tbody></table></div>
+
+<h2 id="queue"><span class="n">06</span>Curation queue</h2>
+<p>Unresolved studies are grouped by publication. Their text is scored against a lexicon of about 400 weighted terms (<code>workflow/config/lexicon.tsv</code>): African countries, demonyms, diaspora terms, regions, ethnolinguistic groups and known cohorts. The text is read in order: the Catalog's sample descriptions, the PubMed abstract, then, for papers still unclear, methods sections of open-access full text from Europe PMC. Only matching sentences are kept. A score of 4 or more is high priority, 2 or more medium. Issues are judged per study accession, so a paper is not flagged for ancestry when its other populations are explicit.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>priority</code>, <code>score</code></td><td>high, medium or low, and the evidence score behind it</td></tr>
+<tr><td><code>issues</code></td><td>What is unresolved: ancestry, origin and/or ethnicity</td></tr>
+<tr><td><code>n_variants_*</code>, <code>n_studies</code>, <code>study_accessions</code></td><td>How much curating the paper would settle</td></tr>
+<tr><td><code>candidate_regions</code>, <code>candidate_countries</code>, <code>candidate_ethnolinguistic</code>, <code>cohorts</code></td><td>Suggestions from the text</td></tr>
+<tr><td><code>evidence_sources</code>, <code>evidence</code></td><td>Where they were found, and the sentences</td></tr>
+<tr><td><code>curator_decision</code>, <code>curator_notes</code></td><td>Left empty for the curator</td></tr>
+</tbody></table></div>
+<p>The queue only suggests: nothing it finds reaches the AGMP files without a curator's decision.</p>
+
+<h2 id="unmapped"><span class="n">07</span>Unmapped variants</h2>
+<p><code>unmapped_variants.tsv</code> lists every variant ID that did not become an rsID, so nothing is lost silently. <code>rescue_status</code> says why: <code>no_allele</code> (a position without an allele), <code>no_unique_match</code> (no single known variant there with the allele), <code>build_undetermined</code> (the paper's build is unclear), <code>lookup_pending</code> (continued next run), or empty for interaction terms and other IDs.</p>
+
+<h2 id="caches"><span class="n">08</span>Caches</h2>
+<p>Lookups are cached in <code>cache/</code> in the work directory, so each question is asked once, reruns give the same answers, and past results do not change when a web service does.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>File</th><th>Holds</th><th>Refreshed</th></tr></thead>
+<tbody>
+<tr><td><code>variant_rescue.sqlite</code></td><td>Ensembl lookups by position, flanking genes, VEP consequences</td><td>Never</td></tr>
+<tr><td><code>gene_annotation.parquet</code></td><td>Gene names, descriptions, UniProt accessions and functions</td><td>After 180 days; failures retried each run</td></tr>
+<tr><td><code>literature.sqlite</code></td><td>Abstracts and full-text sentences for the curation queue</td><td>Never</td></tr>
+</tbody></table></div>
+
+<h2 id="settings"><span class="n">09</span>Settings</h2>
+<p>Defaults live in <code>workflow/config/config.yaml</code>, commented throughout. The run options cover the common changes. For anything else, put only the keys to change in a YAML file and pass <code>--settings my.yaml</code>:</p>
+<pre><code>variants:
+  rescue_max_new_lookups: 300000
+export:
+  csv: [all_intergenic, ethnicity_report]
+  excel: [ethnicity_report]</code></pre>
+<div class="table-wrap"><table>
+<thead><tr><th>Section</th><th>Holds</th></tr></thead>
+<tbody>
+<tr><td><code>catalog</code></td><td>FTP location, file names, release, local files for offline runs</td></tr>
+<tr><td><code>selection</code></td><td>Ancestry patterns; country and description routes on or off; description pattern</td></tr>
+<tr><td><code>variants</code></td><td>Positional conversion, Ensembl workers, rate and per-run cap; flanking genes and window; VEP; build detection</td></tr>
+<tr><td><code>qc</code></td><td>Every quality-check threshold</td></tr>
+<tr><td><code>compare</code></td><td><code>previous_imports</code> (paths to earlier AGMP imports) and <code>previous_release</code> (path to an earlier results folder); both empty, so off, by default</td></tr>
+<tr><td><code>annotation</code></td><td>Gene cache and its age, batch sizes, length of <code>function</code></td></tr>
+<tr><td><code>triage</code></td><td>Curation queue on or off, lexicon, full text, score thresholds</td></tr>
+<tr><td><code>export</code></td><td>Which files as CSV (<code>csv</code>) and as Excel (<code>excel</code>), <code>gzip</code>, and <code>columns</code></td></tr>
+</tbody></table></div>
+
+<h2 id="reproducibility"><span class="n">10</span>Reproducibility</h2>
+<ul>
+  <li><strong>Software and code:</strong> <code>agmp_gwas_container</code> is built from a fixed Python image (3.13.5) with the exact package versions in <code>container/requirements.txt</code>, and holds the workflow itself. It records what it installed in <code>/opt/AGMP_GWAS/installed.txt</code>.</li>
+  <li><strong>Data:</strong> <code>release.json</code> records each source file's URL, release date, last-modified time, ETag and size.</li>
+  <li><strong>Settings:</strong> <code>run_settings.yaml</code> holds every setting used.</li>
+  <li><strong>Web services:</strong> answers are cached, so a rerun does not depend on them.</li>
+</ul>
+
+<h2 id="layout"><span class="n">11</span>Code layout</h2>
+<pre class="nocopy"><code>AGMP_GWAS/
+├── agmp_gwas                     <span class="c">launcher: setup, check, run, columns, docs</span>
+├── VERSION
+├── container/
+│   ├── agmp_gwas_container.def   <span class="c">container recipe</span>
+│   └── requirements.txt          <span class="c">exact package versions</span>
+├── workflow/                     <span class="c">copied into the container</span>
+│   ├── Snakefile                 <span class="c">build → validate → export → report, + triage</span>
+│   ├── config/                   <span class="c">config.yaml, regions.yaml, lexicon.tsv</span>
+│   ├── scripts/
+│   │   ├── cli.py                <span class="c">options → settings → Snakemake</span>
+│   │   ├── build.py              <span class="c">fetch, select, resolve, annotate</span>
+│   │   ├── variant_rescue.py     <span class="c">positional IDs → rsIDs, flanking genes</span>
+│   │   ├── vep.py · annotate.py  <span class="c">consequences · genes</span>
+│   │   ├── validate.py · export.py · triage.py · report.py
+│   │   ├── columns.py            <span class="c">the 30 columns: sources and transformations</span>
+│   │   └── docs_data.py          <span class="c">writes docs/assets/data.js</span>
+│   └── templates/report.html
+└── docs/                         <span class="c">this documentation</span></code></pre>
+<h3>For developers</h3>
+<ul>
+  <li><code>workflow/scripts/columns.py</code> is the single description of the output: the report, the <code>columns</code> command and these pages all read it. If you change how a column is made, update its entry, then run <code>./agmp_gwas docs</code>.</li>
+  <li>To try code changes without rebuilding the container: <code>AGMP_GWAS_DEV=1 ./agmp_gwas run …</code> uses <code>workflow/</code> from the folder. Rebuild with <code>./agmp_gwas setup --rebuild</code> before real runs.</li>
+  <li>To add a country or alias, edit <code>workflow/config/regions.yaml</code>. Countries with no region are listed in <code>release.json</code>.</li>
+  <li>To publish these pages, serve the <code>docs/</code> folder (for example with GitHub Pages).</li>
+</ul>
+
+</div>
+</div>
+</main>
+<script src="assets/data.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  const q = window.AGMP.qc, pct = x => Math.round(x * 100) + "%";
+  const rows = [
+    ["Output columns present", "FAIL", "Any of the 30 columns is missing"],
+    ["Associations in source file", "FAIL", `Fewer than ${q.min_associations_total.toLocaleString()} (a truncated download)`],
+    ["Curated records", "FAIL", `Fewer than ${q.min_records.toLocaleString()}`],
+    ["Variant IDs well formed", "FAIL", "Any id is not an rsID"],
+    ["Duplicate records", "FAIL", "Any record appears twice"],
+    ["Intergenic labels valid", "FAIL", "Any value is not intergenic / non-intergenic"],
+    ["Records with a geographical region", "FAIL", "Any record has no AGMP region"],
+    ["Numeric p-values", "FAIL", `Fewer than ${pct(q.min_numeric_pvalue_fraction)} are numbers`],
+    ["Record change vs earlier release", "FAIL", `With --compare-release PATH: records fell by more than ${pct(q.max_record_drop_fraction)}`],
+    ["Records with a gene symbol", "WARN", `Fewer than ${pct(q.min_gene_symbol_fraction)}`],
+    ["Records with a variant consequence", "WARN", `Fewer than ${pct(q.min_context_fraction)}`],
+    ["Gene annotation lookups failed", "WARN", "Any lookup failed (retried next run)"],
+    ["Positional IDs awaiting lookup", "WARN", "Any lookup unfinished (continued next run)"],
+  ];
+  document.getElementById("qcBody").innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+})();
+</script>
+</body>
+</html>

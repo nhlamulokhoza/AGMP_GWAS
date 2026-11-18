@@ -1,0 +1,414 @@
+term	category	region	weight
+Angola	african_country	Southern Africa	3
+Botswana	african_country	Southern Africa	3
+Eswatini	african_country	Southern Africa	3
+Swaziland	african_country	Southern Africa	3
+Lesotho	african_country	Southern Africa	3
+Malawi	african_country	Southern Africa	3
+Mozambique	african_country	Southern Africa	3
+Namibia	african_country	Southern Africa	3
+Zambia	african_country	Southern Africa	3
+Zimbabwe	african_country	Southern Africa	3
+Comoros	african_country	East Africa	3
+Djibouti	african_country	East Africa	3
+Eritrea	african_country	East Africa	3
+Ethiopia	african_country	East Africa	3
+Kenya	african_country	East Africa	3
+Madagascar	african_country	East Africa	3
+Mauritius	african_country	East Africa	3
+Rwanda	african_country	East Africa	3
+Seychelles	african_country	East Africa	3
+Somalia	african_country	East Africa	3
+Sudan	african_country	East Africa	3
+Tanzania	african_country	East Africa	3
+Uganda	african_country	East Africa	3
+Benin	african_country	West Africa	3
+Burkina Faso	african_country	West Africa	3
+Cape Verde	african_country	West Africa	3
+Cabo Verde	african_country	West Africa	3
+Ivory Coast	african_country	West Africa	3
+Côte d'Ivoire	african_country	West Africa	3
+Cote d'Ivoire	african_country	West Africa	3
+Gambia	african_country	West Africa	3
+Ghana	african_country	West Africa	3
+Guinea	african_country	West Africa	3
+Guinea-Bissau	african_country	West Africa	3
+Liberia	african_country	West Africa	3
+Mali	african_country	West Africa	3
+Niger	african_country	West Africa	3
+Nigeria	african_country	West Africa	3
+Senegal	african_country	West Africa	3
+Sierra Leone	african_country	West Africa	3
+Togo	african_country	West Africa	3
+Algeria	african_country	North Africa	3
+Egypt	african_country	North Africa	3
+Libya	african_country	North Africa	3
+Mauritania	african_country	North Africa	3
+Morocco	african_country	North Africa	3
+Tunisia	african_country	North Africa	3
+Burundi	african_country	Central Africa	3
+Cameroon	african_country	Central Africa	3
+Central African Republic	african_country	Central Africa	3
+Chad	african_country	Central Africa	3
+Republic of the Congo	african_country	Central Africa	3
+Democratic Republic of the Congo	african_country	Central Africa	3
+DRC	african_country	Central Africa	3
+Congo	african_country	Central Africa	3
+Equatorial Guinea	african_country	Central Africa	3
+Gabon	african_country	Central Africa	3
+São Tomé	african_country	Central Africa	3
+Sao Tome	african_country	Central Africa	3
+South Africa	african_country	Southern Africa	3
+South Sudan	african_country	East Africa	3
+Western Sahara	african_country	North Africa	3
+Nigerian	demonym	West Africa	3
+Nigerians	demonym	West Africa	3
+Ghanaian	demonym	West Africa	3
+Ghanaians	demonym	West Africa	3
+Senegalese	demonym	West Africa	3
+Malian	demonym	West Africa	3
+Malians	demonym	West Africa	3
+Gambian	demonym	West Africa	3
+Gambians	demonym	West Africa	3
+Ivorian	demonym	West Africa	3
+Ivorians	demonym	West Africa	3
+Beninese	demonym	West Africa	3
+Togolese	demonym	West Africa	3
+Burkinabe	demonym	West Africa	3
+Burkinabé	demonym	West Africa	3
+Nigerien	demonym	West Africa	3
+Liberian	demonym	West Africa	3
+Liberians	demonym	West Africa	3
+Guinean	demonym	West Africa	3
+Guineans	demonym	West Africa	3
+Sierra Leonean	demonym	West Africa	3
+Cape Verdean	demonym	West Africa	3
+Kenyan	demonym	East Africa	3
+Kenyans	demonym	East Africa	3
+Ugandan	demonym	East Africa	3
+Ugandans	demonym	East Africa	3
+Ethiopian	demonym	East Africa	3
+Ethiopians	demonym	East Africa	3
+Tanzanian	demonym	East Africa	3
+Tanzanians	demonym	East Africa	3
+Rwandan	demonym	East Africa	3
+Rwandans	demonym	East Africa	3
+Sudanese	demonym	East Africa	3
+Somali	demonym	East Africa	3
+Somalis	demonym	East Africa	3
+Eritrean	demonym	East Africa	3
+Eritreans	demonym	East Africa	3
+Djiboutian	demonym	East Africa	3
+Malagasy	demonym	East Africa	3
+Mauritian	demonym	East Africa	3
+Mauritians	demonym	East Africa	3
+Comorian	demonym	East Africa	3
+Seychellois	demonym	East Africa	3
+Zimbabwean	demonym	Southern Africa	3
+Zimbabweans	demonym	Southern Africa	3
+Zambian	demonym	Southern Africa	3
+Zambians	demonym	Southern Africa	3
+Malawian	demonym	Southern Africa	3
+Malawians	demonym	Southern Africa	3
+Botswanan	demonym	Southern Africa	3
+Motswana	demonym	Southern Africa	3
+Batswana	demonym	Southern Africa	3
+Namibian	demonym	Southern Africa	3
+Namibians	demonym	Southern Africa	3
+Mozambican	demonym	Southern Africa	3
+Mozambicans	demonym	Southern Africa	3
+Angolan	demonym	Southern Africa	3
+Angolans	demonym	Southern Africa	3
+Basotho	demonym	Southern Africa	3
+Mosotho	demonym	Southern Africa	3
+Swazi	demonym	Southern Africa	3
+South African	demonym	Southern Africa	3
+South Africans	demonym	Southern Africa	3
+Emaswati	demonym	Southern Africa	3
+Egyptian	demonym	North Africa	3
+Egyptians	demonym	North Africa	3
+Moroccan	demonym	North Africa	3
+Moroccans	demonym	North Africa	3
+Tunisian	demonym	North Africa	3
+Tunisians	demonym	North Africa	3
+Algerian	demonym	North Africa	3
+Algerians	demonym	North Africa	3
+Libyan	demonym	North Africa	3
+Libyans	demonym	North Africa	3
+Mauritanian	demonym	North Africa	3
+Mauritanians	demonym	North Africa	3
+Maghrebi	demonym	North Africa	3
+Cameroonian	demonym	Central Africa	3
+Cameroonians	demonym	Central Africa	3
+Congolese	demonym	Central Africa	3
+Gabonese	demonym	Central Africa	3
+Chadian	demonym	Central Africa	3
+Chadians	demonym	Central Africa	3
+Burundian	demonym	Central Africa	3
+Burundians	demonym	Central Africa	3
+Central African	demonym	Central Africa	3
+Equatoguinean	demonym	Central Africa	3
+African American	diaspora	African-American / Afro-Caribbean	3
+African Americans	diaspora	African-American / Afro-Caribbean	3
+African-American	diaspora	African-American / Afro-Caribbean	3
+African-Americans	diaspora	African-American / Afro-Caribbean	3
+Afro-Caribbean	diaspora	African-American / Afro-Caribbean	3
+Afro-Caribbeans	diaspora	African-American / Afro-Caribbean	3
+African Caribbean	diaspora	African-American / Afro-Caribbean	3
+African-Caribbean	diaspora	African-American / Afro-Caribbean	3
+Black American	diaspora	African-American / Afro-Caribbean	3
+Black Americans	diaspora	African-American / Afro-Caribbean	3
+Black British	diaspora	African-American / Afro-Caribbean	3
+Black Caribbean	diaspora	African-American / Afro-Caribbean	3
+Afro-Brazilian	diaspora	African-American / Afro-Caribbean	3
+Afro-Brazilians	diaspora	African-American / Afro-Caribbean	3
+Afro-Colombian	diaspora	African-American / Afro-Caribbean	3
+Afro-Colombians	diaspora	African-American / Afro-Caribbean	3
+Afro-Latin	diaspora	African-American / Afro-Caribbean	3
+Afro-Latino	diaspora	African-American / Afro-Caribbean	3
+Afro-descendant	diaspora	African-American / Afro-Caribbean	3
+Afro-descendants	diaspora	African-American / Afro-Caribbean	3
+Afrodescendant	diaspora	African-American / Afro-Caribbean	3
+Garifuna	diaspora	African-American / Afro-Caribbean	3
+Black Hispanic	diaspora	African-American / Afro-Caribbean	3
+African ancestry	diaspora		3
+African-ancestry	diaspora		3
+African descent	diaspora		3
+of African origin	diaspora		3
+African origin	diaspora		3
+African-descent	diaspora		3
+admixed African	diaspora		3
+African admixture	diaspora		3
+Black African	diaspora		3
+Black Africans	diaspora		3
+Black women	diaspora		3
+Black men	diaspora		3
+Black participants	diaspora		3
+Black individuals	diaspora		3
+Black adults	diaspora		3
+Black children	diaspora		3
+Black patients	diaspora		3
+Black subjects	diaspora		3
+Black and White	diaspora		3
+Black or African American	diaspora		3
+Cape Mixed Ancestry	diaspora	Southern Africa	3
+Cape Coloured	diaspora	Southern Africa	3
+Cape Colored	diaspora	Southern Africa	3
+South African Coloured	diaspora	Southern Africa	3
+South African Colored	diaspora	Southern Africa	3
+SAC population	diaspora	Southern Africa	3
+sub-Saharan	african_region		2
+Sub-Saharan Africa	african_region		2
+sub-Saharan African	african_region		2
+Horn of Africa	african_region		2
+Sahel	african_region		2
+Sahelian	african_region		2
+West Africa	african_region	West Africa	2
+West African	african_region	West Africa	2
+West Africans	african_region	West Africa	2
+East Africa	african_region	East Africa	2
+East African	african_region	East Africa	2
+East Africans	african_region	East Africa	2
+North Africa	african_region	North Africa	2
+North African	african_region	North Africa	2
+North Africans	african_region	North Africa	2
+Maghreb	african_region	North Africa	2
+Northwest Africa	african_region	North Africa	2
+Southern Africa	african_region	Southern Africa	2
+Southern African	african_region	Southern Africa	2
+Southern Africans	african_region	Southern Africa	2
+Central Africa	african_region	Central Africa	2
+Central African region	african_region	Central Africa	2
+Africa	african_generic		2
+African	african_generic		2
+Africans	african_generic		2
+Yoruba	ethnolinguistic	West Africa	4
+Igbo	ethnolinguistic	West Africa	4
+Ibo	ethnolinguistic	West Africa	4
+Hausa	ethnolinguistic	West Africa	4
+Fulani	ethnolinguistic	West Africa	4
+Fula	ethnolinguistic	West Africa	4
+Fulbe	ethnolinguistic	West Africa	4
+Peul	ethnolinguistic	West Africa	4
+Akan	ethnolinguistic	West Africa	4
+Ashanti	ethnolinguistic	West Africa	4
+Asante	ethnolinguistic	West Africa	4
+Fante	ethnolinguistic	West Africa	4
+Ewe	ethnolinguistic	West Africa	4
+Ga-Adangbe	ethnolinguistic	West Africa	4
+Mandinka	ethnolinguistic	West Africa	4
+Mandinga	ethnolinguistic	West Africa	4
+Mande	ethnolinguistic	West Africa	4
+Wolof	ethnolinguistic	West Africa	4
+Serer	ethnolinguistic	West Africa	4
+Serere	ethnolinguistic	West Africa	4
+Jola	ethnolinguistic	West Africa	4
+Diola	ethnolinguistic	West Africa	4
+Bambara	ethnolinguistic	West Africa	4
+Dogon	ethnolinguistic	West Africa	4
+Mossi	ethnolinguistic	West Africa	4
+Kanuri	ethnolinguistic	West Africa	4
+Tiv	ethnolinguistic	West Africa	4
+Ibibio	ethnolinguistic	West Africa	4
+Efik	ethnolinguistic	West Africa	4
+Ijaw	ethnolinguistic	West Africa	4
+Edo	ethnolinguistic	West Africa	4
+Esan	ethnolinguistic	West Africa	4
+Gurunsi	ethnolinguistic	West Africa	4
+Dagomba	ethnolinguistic	West Africa	4
+Mende	ethnolinguistic	West Africa	4
+Temne	ethnolinguistic	West Africa	4
+Kru	ethnolinguistic	West Africa	4
+Kpelle	ethnolinguistic	West Africa	4
+Fon	ethnolinguistic	West Africa	4
+Songhai	ethnolinguistic	West Africa	4
+Djerma	ethnolinguistic	West Africa	4
+Zarma	ethnolinguistic	West Africa	4
+Zulu	ethnolinguistic	Southern Africa	4
+Xhosa	ethnolinguistic	Southern Africa	4
+Sotho	ethnolinguistic	Southern Africa	4
+Tswana	ethnolinguistic	Southern Africa	4
+Venda	ethnolinguistic	Southern Africa	4
+Tsonga	ethnolinguistic	Southern Africa	4
+Ndebele	ethnolinguistic	Southern Africa	4
+Shona	ethnolinguistic	Southern Africa	4
+Pedi	ethnolinguistic	Southern Africa	4
+Khoe	ethnolinguistic	Southern Africa	4
+Khoisan	ethnolinguistic	Southern Africa	4
+KhoeSan	ethnolinguistic	Southern Africa	4
+Khoe-San	ethnolinguistic	Southern Africa	4
+ǂKhomani	ethnolinguistic	Southern Africa	4
+Himba	ethnolinguistic	Southern Africa	4
+Herero	ethnolinguistic	Southern Africa	4
+Ovambo	ethnolinguistic	Southern Africa	4
+Ovaherero	ethnolinguistic	Southern Africa	4
+Chewa	ethnolinguistic	Southern Africa	4
+Bemba	ethnolinguistic	Southern Africa	4
+Lozi	ethnolinguistic	Southern Africa	4
+Makua	ethnolinguistic	Southern Africa	4
+Sena	ethnolinguistic	Southern Africa	4
+Nguni	ethnolinguistic	Southern Africa	4
+Maasai	ethnolinguistic	East Africa	4
+Masai	ethnolinguistic	East Africa	4
+Luo	ethnolinguistic	East Africa	4
+Luhya	ethnolinguistic	East Africa	4
+Kikuyu	ethnolinguistic	East Africa	4
+Kalenjin	ethnolinguistic	East Africa	4
+Kamba	ethnolinguistic	East Africa	4
+Baganda	ethnolinguistic	East Africa	4
+Ganda	ethnolinguistic	East Africa	4
+Banyankole	ethnolinguistic	East Africa	4
+Banyarwanda	ethnolinguistic	East Africa	4
+Hutu	ethnolinguistic	East Africa	4
+Tutsi	ethnolinguistic	East Africa	4
+Amhara	ethnolinguistic	East Africa	4
+Oromo	ethnolinguistic	East Africa	4
+Tigray	ethnolinguistic	East Africa	4
+Tigrinya	ethnolinguistic	East Africa	4
+Tigre	ethnolinguistic	East Africa	4
+Afar	ethnolinguistic	East Africa	4
+Hadza	ethnolinguistic	East Africa	4
+Hadzabe	ethnolinguistic	East Africa	4
+Sandawe	ethnolinguistic	East Africa	4
+Iraqw	ethnolinguistic	East Africa	4
+Datog	ethnolinguistic	East Africa	4
+Sukuma	ethnolinguistic	East Africa	4
+Chagga	ethnolinguistic	East Africa	4
+Dinka	ethnolinguistic	East Africa	4
+Nuer	ethnolinguistic	East Africa	4
+Shilluk	ethnolinguistic	East Africa	4
+Beja	ethnolinguistic	East Africa	4
+Nubian	ethnolinguistic	East Africa	4
+Nubians	ethnolinguistic	East Africa	4
+Merina	ethnolinguistic	East Africa	4
+Sidama	ethnolinguistic	East Africa	4
+Wolaita	ethnolinguistic	East Africa	4
+Gurage	ethnolinguistic	East Africa	4
+Agaw	ethnolinguistic	East Africa	4
+Baka	ethnolinguistic	Central Africa	4
+Mbuti	ethnolinguistic	Central Africa	4
+Batwa	ethnolinguistic	Central Africa	4
+Biaka	ethnolinguistic	Central Africa	4
+BaAka	ethnolinguistic	Central Africa	4
+Bakola	ethnolinguistic	Central Africa	4
+Bakiga	ethnolinguistic	Central Africa	4
+Bamileke	ethnolinguistic	Central Africa	4
+Fang	ethnolinguistic	Central Africa	4
+Kongo	ethnolinguistic	Central Africa	4
+Bakongo	ethnolinguistic	Central Africa	4
+Luba	ethnolinguistic	Central Africa	4
+Mongo	ethnolinguistic	Central Africa	4
+Teke	ethnolinguistic	Central Africa	4
+Berber	ethnolinguistic	North Africa	4
+Berbers	ethnolinguistic	North Africa	4
+Amazigh	ethnolinguistic	North Africa	4
+Imazighen	ethnolinguistic	North Africa	4
+Tuareg	ethnolinguistic	North Africa	4
+Kabyle	ethnolinguistic	North Africa	4
+Mozabite	ethnolinguistic	North Africa	4
+Saharawi	ethnolinguistic	North Africa	4
+Copts	ethnolinguistic	North Africa	4
+Coptic	ethnolinguistic	North Africa	4
+Bantu	ethnolinguistic		4
+Bantu-speaking	ethnolinguistic		4
+Nilotic	ethnolinguistic		4
+Nilo-Saharan	ethnolinguistic		4
+Niger-Congo	ethnolinguistic		4
+Afro-Asiatic	ethnolinguistic		4
+Afroasiatic	ethnolinguistic		4
+Cushitic	ethnolinguistic		4
+Semitic-speaking	ethnolinguistic		4
+rainforest hunter-gatherers	ethnolinguistic		4
+Pygmy	ethnolinguistic		4
+Pygmies	ethnolinguistic		4
+San people	ethnolinguistic		4
+San population	ethnolinguistic		4
+San individuals	ethnolinguistic		4
+ethnolinguistic	ethnicity_cue		1
+ethnic group	ethnicity_cue		1
+ethnic groups	ethnicity_cue		1
+H3Africa	cohort		4
+AWI-Gen	cohort		4
+AWIGen	cohort		4
+APCDR	cohort		4
+Uganda Genome Resource	cohort		4
+Ugandan General Population Cohort	cohort		4
+Durban Diabetes	cohort		4
+Africa America Diabetes Mellitus	cohort		4
+AADM	cohort		4
+Jackson Heart Study	cohort		4
+Southern Community Cohort	cohort		4
+Black Women's Health Study	cohort		4
+Howard University Family Study	cohort		4
+HANDLS	cohort		4
+Healthy Aging in Neighborhoods of Diversity	cohort		4
+Birth to Twenty	cohort		4
+Bt20	cohort		4
+Agincourt	cohort		4
+Dikgale	cohort		4
+Nairobi Urban Health	cohort		4
+Nanoro	cohort		4
+Navrongo	cohort		4
+SIREN	cohort		4
+CHAMPS	cohort		4
+ADDRESS	cohort		4
+MalariaGEN	cohort		4
+Ghana Randomized	cohort		4
+non-African	negative		0
+non-Africans	negative		0
+out of Africa	negative		0
+out-of-Africa	negative		0
+African green monkey	negative		0
+African green monkeys	negative		0
+African swine fever	negative		0
+African clawed frog	negative		0
+African elephant	negative		0
+African trypanosomiasis	negative		0
+African horse sickness	negative		0
+Papua New Guinea	negative		0
+guinea pig	negative		0
+guinea pigs	negative		0
+Congo red	negative		0
+ethnic origin	ethnicity_cue		1
+self-reported ethnicity	ethnicity_cue		1
+tribe	ethnicity_cue		1

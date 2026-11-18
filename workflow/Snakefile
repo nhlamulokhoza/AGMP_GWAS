@@ -1,0 +1,162 @@
+# AGMP GWAS Catalog curation pipeline
+#
+# Most users run it through the launcher, which sets everything up:
+#   agmp_gwas run                  # run everything for the latest release
+#   agmp_gwas run --dry-run        # show the release and what would run
+# Direct use is also possible:
+#   snakemake --cores 4 [--configfile my_settings.yaml]
+#
+# The release is read from the GWAS Catalog FTP when the workflow starts.
+# If results/<release>/ is already complete, nothing runs.
+
+import sys
+from pathlib import Path
+
+import yaml
+
+configfile: str(Path(workflow.basedir) / "config" / "config.yaml")
+
+sys.path.insert(0, str(Path(workflow.basedir) / "scripts"))
+from common import release_info  # noqa: E402
+
+SCRIPTS = Path(workflow.basedir) / "scripts"
+# Run every step with the same Python as Snakemake (the conda env), never a
+# system/module "python" that happens to be first on PATH.
+PY = sys.executable
+
+
+def resolve_release():
+    cat = config["catalog"]
+    rel = str(cat.get("release", "auto"))
+    if rel != "auto":
+        return rel
+    if cat.get("local_associations"):
+        raise ValueError("Set catalog.release (e.g. 2026-11-02) when using local files.")
+    try:
+        return release_info(f"{cat['base_url']}/{cat['associations']}")["release"]
+    except Exception as e:
+        raise SystemExit(
+            f"Cannot reach the GWAS Catalog FTP ({e}).\n"
+            "If this node has no internet, run on a login/data-transfer node, or set "
+            "catalog.release plus catalog.local_associations/local_ancestry in config.yaml.")
+
+
+RELEASE = resolve_release()
+OUT = f"{config['results_dir']}/{RELEASE}"
+print(f"GWAS Catalog release: {RELEASE} -> {OUT}", file=sys.stderr)
+
+# Snakemake-merged config (including --config overrides) handed to the scripts
+CONFIG = Path(".snakemake/agmp_config.yaml")
+CONFIG.parent.mkdir(exist_ok=True)
+CONFIG.write_text(yaml.safe_dump(dict(config), sort_keys=False))
+
+
+TRIAGE = bool(config.get("triage", {}).get("enabled", True))
+# Saved next to the results, so every release records exactly how it was made
+Path(OUT).mkdir(parents=True, exist_ok=True)
+Path(f"{OUT}/run_settings.yaml").write_text(CONFIG.read_text())
+
+
+rule all:
+    input:
+        f"{OUT}/agmp_gwas_{RELEASE}.parquet",
+        f"{OUT}/qc.tsv",
+        f"{OUT}/export/MANIFEST.tsv",
+        f"{OUT}/report.html",
+        *([f"{OUT}/curation_queue.tsv"] if TRIAGE else []),
+
+
+rule build:
+    output:
+        table=f"{OUT}/agmp_gwas_{RELEASE}.parquet",
+        meta=f"{OUT}/release.json",
+        unmapped=f"{OUT}/unmapped_variants.tsv",
+    log:
+        f"{OUT}/logs/build.log",
+    threads: 6
+    retries: 2
+    resources:
+        mem_mb=4000,
+        runtime=240,
+    shell:
+        "{PY} {SCRIPTS}/build.py --config {CONFIG} --release {RELEASE} "
+        "--out {output.table} --meta {output.meta} --unmapped {output.unmapped} 2> {log}"
+
+
+rule validate:
+    input:
+        table=rules.build.output.table,
+        meta=rules.build.output.meta,
+    output:
+        qc=f"{OUT}/qc.tsv",
+    log:
+        f"{OUT}/logs/validate.log",
+    threads: 1
+    resources:
+        mem_mb=2000,
+        runtime=10,
+    shell:
+        "{PY} {SCRIPTS}/validate.py --config {CONFIG} --table {input.table} "
+        "--meta {input.meta} --out {output.qc} 2> {log}"
+
+
+rule triage:
+    input:
+        table=rules.build.output.table,
+    output:
+        queue=f"{OUT}/curation_queue.tsv",
+        summary=f"{OUT}/curation_queue.summary.json",
+    log:
+        f"{OUT}/logs/triage.log",
+    threads: 4
+    retries: 2
+    resources:
+        mem_mb=2000,
+        runtime=120,
+    shell:
+        "{PY} {SCRIPTS}/triage.py --config {CONFIG} --table {input.table} "
+        "--out {output.queue} 2> {log}"
+
+
+rule export:
+    input:
+        table=rules.build.output.table,
+        qc=rules.validate.output.qc,  # export only after QC passes
+    params:
+        # changing these re-runs only the export, not the build
+        columns=str(config["export"].get("columns", "all")),
+        csv=str(config["export"].get("csv", "all")),
+        excel=str(config["export"].get("excel", "none")),
+        gzip=str(config["export"].get("gzip", False)),
+        previous=" ".join(map(str, (config.get("compare") or {}).get("previous_imports") or [])),
+    output:
+        manifest=f"{OUT}/export/MANIFEST.tsv",
+    log:
+        f"{OUT}/logs/export.log",
+    threads: 1
+    resources:
+        mem_mb=3000,
+        runtime=30,
+    shell:
+        "{PY} {SCRIPTS}/export.py --config {CONFIG} --table {input.table} "
+        "--outdir {OUT}/export --manifest {output.manifest} 2> {log}"
+
+
+rule report:
+    input:
+        table=rules.build.output.table,
+        meta=rules.build.output.meta,
+        qc=rules.validate.output.qc,
+        manifest=rules.export.output.manifest,
+        queue=([rules.triage.output.summary] if TRIAGE else []),
+    output:
+        html=f"{OUT}/report.html",
+    log:
+        f"{OUT}/logs/report.log",
+    threads: 1
+    resources:
+        mem_mb=3000,
+        runtime=10,
+    shell:
+        "{PY} {SCRIPTS}/report.py --config {CONFIG} --table {input.table} --meta {input.meta} "
+        "--qc {input.qc} --manifest {input.manifest} --out {output.html} 2> {log}"

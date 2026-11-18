@@ -1,0 +1,58 @@
+Bootstrap: docker
+From: python:3.13.5-slim-bookworm
+
+# agmp_gwas_container: the AGMP_GWAS workflow and everything it needs.
+#
+# It holds the software (Python, Snakemake, polars ...) at the exact versions
+# in requirements.txt, and the workflow itself (Snakefile, scripts, default
+# settings). Nothing is installed on the host. What a run writes (results/,
+# cache/, logs/) goes to the work directory outside the container.
+#
+# You do not need to build it yourself: `./agmp_gwas setup` does it.
+# By hand, from the repository folder:
+#     apptainer build --fakeroot agmp_gwas_container.sif container/agmp_gwas_container.def
+
+%files
+    container/requirements.txt /opt/AGMP_GWAS/requirements.txt
+    workflow /opt/AGMP_GWAS/workflow
+    VERSION /opt/AGMP_GWAS/VERSION
+
+%post
+    export PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+    pip install --upgrade "pip==25.1.1"
+    pip install -r /opt/AGMP_GWAS/requirements.txt
+    pip freeze > /opt/AGMP_GWAS/installed.txt
+    date -u +%Y-%m-%dT%H:%M:%SZ > /opt/AGMP_GWAS/built_at.txt
+    find /opt/AGMP_GWAS/workflow -name __pycache__ -prune -exec rm -rf {} +
+    chmod -R a+rX /opt/AGMP_GWAS
+    rm -rf /root/.cache /var/lib/apt/lists/*
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export AGMP_GWAS_HOME=/opt/AGMP_GWAS
+    # Never pick up Python packages from the host (~/.local, PYTHONPATH)
+    export PYTHONNOUSERSITE=1
+    export PYTHONDONTWRITEBYTECODE=1
+    unset PYTHONPATH PYTHONHOME
+
+%runscript
+    exec python /opt/AGMP_GWAS/workflow/scripts/cli.py "$@"
+
+%test
+    python -c "import polars as pl, pyarrow, requests, yaml, snakemake, xlsxwriter; \
+pl.DataFrame({'x': [1, 2]}).select(pl.col('x').sum())"
+    python /opt/AGMP_GWAS/workflow/scripts/cli.py version >/dev/null
+    echo "agmp_gwas_container OK (AGMP_GWAS $(cat /opt/AGMP_GWAS/VERSION))"
+
+%labels
+    org.opencontainers.image.title agmp_gwas_container
+    org.opencontainers.image.description AGMP_GWAS: GWAS Catalog curation for the African Genomic Medicine Portal
+
+%help
+    agmp_gwas_container: the AGMP_GWAS workflow and its software.
+    Use it through the agmp_gwas launcher:
+        ./agmp_gwas setup      build or find this container
+        ./agmp_gwas run        run the workflow
+    Or directly:  apptainer run agmp_gwas_container.sif run --help
+    Installed package versions: /opt/AGMP_GWAS/installed.txt

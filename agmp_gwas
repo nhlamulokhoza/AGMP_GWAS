@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+# AGMP_GWAS launcher: runs the workflow inside agmp_gwas_container.
+#
+#   ./agmp_gwas setup                  once: build the container (about 5 minutes)
+#   ./agmp_gwas check                  check the software and internet access
+#   ./agmp_gwas run [options]          run the workflow   (run --help lists options)
+#   ./agmp_gwas run --slurm [options]  submit the run as a SLURM job
+#   ./agmp_gwas columns [name]         what each column holds and where it comes from
+#   ./agmp_gwas docs                   refresh the documentation after code changes
+#
+# Results, caches and logs are written to the work directory: this folder, or
+# the one given with --workdir DIR (or AGMP_GWAS_WORKDIR).
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SIF="${AGMP_GWAS_SIF:-$HERE/agmp_gwas_container.sif}"
+WORK="${AGMP_GWAS_WORKDIR:-$HERE}"
+STATE="$HERE/.agmp_gwas"
+
+say() { printf '%s\n' "$*" >&2; }
+die() { say "ERROR: $*"; exit 1; }
+
+container_runtime() {
+    if command -v apptainer >/dev/null 2>&1; then echo apptainer
+    elif command -v singularity >/dev/null 2>&1; then echo singularity
+    fi
+}
+
+# --------------------------------------------------------------------- setup
+setup() {
+    local rt="" mode="${1:-}"
+    [[ "$mode" != "--no-container" ]] && rt="$(container_runtime)"
+    mkdir -p "$STATE"
+    if [[ -n "$rt" ]]; then
+        [[ "$mode" == "--rebuild" ]] && rm -f "$SIF"
+        if [[ -f "$SIF" ]]; then
+            say "Container found: $SIF"
+        else
+            [[ -d "$HERE/workflow" ]] || die "No container at $SIF and no workflow/ folder to build one from.
+  Copy agmp_gwas_container.sif next to this launcher, or set AGMP_GWAS_SIF."
+            say "Building agmp_gwas_container with $rt (about 5 minutes, ~400 MB)..."
+            ( cd "$HERE" && "$rt" build --fakeroot "$SIF" container/agmp_gwas_container.def ) \
+            || ( cd "$HERE" && "$rt" build "$SIF" container/agmp_gwas_container.def ) \
+            || die "Could not build the container on this computer. Options:
+  1. Build it where Apptainer allows it (./agmp_gwas setup) and copy
+     agmp_gwas_container.sif next to this launcher.
+  2. Ask your HPC support to enable 'fakeroot' builds for your account.
+  3. Run './agmp_gwas setup --no-container' to use a Python environment instead."
+        fi
+        "$rt" test "$SIF" || die "The container failed its self-test."
+        echo container > "$STATE/runtime"
+        say "Ready. Next: ./agmp_gwas check, then ./agmp_gwas run"
+        return
+    fi
+    [[ -d "$HERE/workflow" ]] || die "Without Apptainer, setup needs the full AGMP_GWAS folder."
+    say "Setting up a Python environment (no Apptainer/Singularity found, or --no-container)."
+    local py
+    if command -v mamba >/dev/null 2>&1 || command -v conda >/dev/null 2>&1; then
+        local c; c="$(command -v mamba || command -v conda)"
+        "$c" env list | grep -q "^agmp_gwas " || "$c" create -y -n agmp_gwas -c conda-forge python=3.13 pip
+        py="$("$c" run -n agmp_gwas python -c 'import sys; print(sys.executable)')"
+    else
+        command -v python3 >/dev/null 2>&1 || die "Neither Apptainer, conda nor python3 found."
+        python3 -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+            || die "python3 is older than 3.11; install Apptainer or conda instead."
+        python3 -m venv "$HERE/.venv"
+        py="$HERE/.venv/bin/python"
+    fi
+    PYTHONNOUSERSITE=1 "$py" -m pip install -r "$HERE/container/requirements.txt"
+    echo "$py" > "$STATE/runtime"
+    say "Ready. Next: ./agmp_gwas check, then ./agmp_gwas run"
+}
+
+# File paths on the command line are made absolute, so they mean the same
+# inside the container and in SLURM jobs as where you typed them.
+PATH_OPTS="--previous --compare-release --results-dir --settings --local-associations --local-ancestry"
+absolutize() {  # sets ARGS
+    ARGS=()
+    local prev="" a o
+    for a in "$@"; do
+        for o in $PATH_OPTS; do
+            if [[ "$prev" == "$o" && "$a" != /* ]]; then a="$PWD/$a"; fi
+            if [[ "$a" == "$o="* && "${a#*=}" != /* ]]; then a="$o=$PWD/${a#*=}"; fi
+        done
+        ARGS+=("$a")
+        prev="$a"
+    done
+}
+
+# ---------------------------------------------------- run inside the runtime
+in_env() {  # in_env <command> [args]
+    absolutize "$@"; set -- "${ARGS[@]}"
+    mkdir -p "$WORK"
+    local runtime=""
+    [[ -f "$STATE/runtime" ]] && runtime="$(cat "$STATE/runtime")"
+    if [[ -z "$runtime" ]]; then
+        if [[ -f "$SIF" && -n "$(container_runtime)" ]]; then runtime=container
+        elif [[ -x "$HERE/.venv/bin/python" ]]; then runtime="$HERE/.venv/bin/python"
+        else die "Not set up yet. Run: ./agmp_gwas setup"; fi
+    fi
+    if [[ "$runtime" != container ]]; then
+        [[ -x "$runtime" ]] || die "Python environment $runtime not found. Run: ./agmp_gwas setup"
+        cd "$WORK"
+        PYTHONNOUSERSITE=1 exec "$runtime" "$HERE/workflow/scripts/cli.py" "$@"
+    fi
+
+    local rt; rt="$(container_runtime)"
+    [[ -n "$rt" ]] || die "Apptainer/Singularity is not available here (try: module load apptainer)."
+    [[ -f "$SIF" ]] || die "Container $SIF not found. Run: ./agmp_gwas setup"
+    local binds=("--bind" "$WORK") prev="" a d val
+    # folders named on the command line must be visible inside the container
+    for a in "$@"; do
+        val=""
+        case "$prev" in --previous|--compare-release|--results-dir|--settings|--local-associations|--local-ancestry) val="$a" ;; esac
+        case "$a" in --previous=*|--compare-release=*|--results-dir=*|--settings=*|--local-associations=*|--local-ancestry=*) val="${a#*=}" ;; esac
+        if [[ -n "$val" ]]; then
+            d="$(dirname "$val")"; [[ "$prev" == --results-dir || "$a" == --results-dir=* ]] && d="$val"
+            mkdir -p "$d" 2>/dev/null || true
+            [[ -d "$d" ]] && binds+=("--bind" "$(cd "$d" && pwd)")
+        fi
+        prev="$a"
+    done
+    [[ -n "${AGMP_GWAS_BIND:-}" ]] && binds+=("--bind" "$AGMP_GWAS_BIND")
+    # Development: use this folder's workflow/ (and docs/) instead of the copy in the container
+    if [[ "${AGMP_GWAS_DEV:-}" == 1 || "${1:-}" == docs ]]; then
+        [[ -d "$HERE/workflow" ]] || die "AGMP_GWAS_DEV needs the full AGMP_GWAS folder."
+        binds+=("--bind" "$HERE/workflow:/opt/AGMP_GWAS/workflow" "--bind" "$HERE/VERSION:/opt/AGMP_GWAS/VERSION")
+        [[ -d "$HERE/docs" ]] && binds+=("--bind" "$HERE/docs:/opt/AGMP_GWAS/docs")
+    elif [[ -d "$HERE/workflow" && -n "$(find "$HERE/workflow" -newer "$SIF" -type f -print -quit 2>/dev/null)" ]]; then
+        say "Note: workflow/ has changed since the container was built. Rebuild with"
+        say "      ./agmp_gwas setup --rebuild   (or test the changes with AGMP_GWAS_DEV=1)"
+    fi
+    local envs=()
+    [[ -n "${SLURM_CPUS_PER_TASK:-}" ]] && envs+=("--env" "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK")
+    [[ -n "${NCBI_API_KEY:-}" ]] && envs+=("--env" "NCBI_API_KEY=$NCBI_API_KEY")
+    exec "$rt" run --cleanenv "${binds[@]}" ${envs[@]+"${envs[@]}"} --pwd "$WORK" "$SIF" "$@"
+}
+
+# ------------------------------------------------------------------ SLURM
+submit() {  # submit <run args>; the --slurm options are handled here
+    absolutize "$@"; set -- "${ARGS[@]}"
+    local args=() time="08:00:00" mem="6G" partition="" account="" cores=6
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --slurm) ;;
+            --time) time="$2"; shift ;;
+            --mem) mem="$2"; shift ;;
+            --partition) partition="$2"; shift ;;
+            --account) account="$2"; shift ;;
+            --cores) cores="$2"; args+=("$1" "$2"); shift ;;
+            *) args+=("$1") ;;
+        esac
+        shift
+    done
+    command -v sbatch >/dev/null 2>&1 || die "sbatch not found: --slurm works on a SLURM cluster only."
+    mkdir -p "$WORK/logs" "$STATE"
+    local job="$STATE/job.sbatch" q
+    {
+        echo "#!/bin/bash"
+        echo "#SBATCH --job-name=AGMP_GWAS"
+        echo "#SBATCH --cpus-per-task=$cores"
+        echo "#SBATCH --mem=$mem"
+        echo "#SBATCH --time=$time"
+        echo "#SBATCH --output=$WORK/logs/agmp_gwas_%j.out"
+        [[ -n "$partition" ]] && echo "#SBATCH --partition=$partition"
+        [[ -n "$account" ]] && echo "#SBATCH --account=$account"
+        echo "set -euo pipefail"
+        echo "module load apptainer 2>/dev/null || module load singularity 2>/dev/null || true"
+        printf 'export AGMP_GWAS_WORKDIR=%q\n' "$WORK"
+        printf '%q run' "$HERE/agmp_gwas"
+        for q in ${args[@]+"${args[@]}"}; do printf ' %q' "$q"; done
+        echo
+    } > "$job"
+    local id; id="$(sbatch --parsable "$job")"
+    say "Submitted job $id"
+    say "  follow it:  tail -f $WORK/logs/agmp_gwas_${id}.out"
+    say "  status:     squeue -j $id"
+}
+
+# ------------------------------------------------------------------- main
+cmd="${1:-help}"; shift || true
+rest=()
+while [[ $# -gt 0 ]]; do   # --workdir is a launcher option, valid for any command
+    case "$1" in
+        --workdir) WORK="$(mkdir -p "$2" && cd "$2" && pwd)"; shift ;;
+        --workdir=*) WORK="$(mkdir -p "${1#*=}" && cd "${1#*=}" && pwd)" ;;
+        *) rest+=("$1") ;;
+    esac
+    shift
+done
+set -- ${rest[@]+"${rest[@]}"}
+case "$cmd" in
+    setup) setup "$@" ;;
+    run)
+        for a in "$@"; do [[ "$a" == --slurm ]] && { submit "$@"; exit 0; }; done
+        in_env run "$@" ;;
+    check|columns|docs|version) in_env "$cmd" "$@" ;;
+    help|-h|--help)
+        sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+        say ""
+        say "SLURM options (with --slurm): --time HH:MM:SS --mem 6G --partition NAME --account NAME"
+        say "Documentation: docs/index.html" ;;
+    *) die "Unknown command '$cmd'. Try: ./agmp_gwas help" ;;
+esac

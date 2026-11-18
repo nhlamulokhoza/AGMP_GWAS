@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>document.documentElement.classList.add("js")</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGMP_GWAS Guide</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<section class="pagehead">
+  <div class="wrap">
+    
+    <h1 class="display">Guide</h1>
+    <p class="lede">Install, run, and run on an HPC. You do not need to know anything about containers or workflow managers: <code>agmp_gwas</code> handles both.</p>
+
+  </div>
+</section>
+
+<div class="docgrid">
+<aside class="side"><nav class="toc" aria-label="On this page">
+      <a href="#install"><b>01</b>Install</a><a href="#container"><b>02</b>The container</a><a href="#run"><b>03</b>Run</a><a href="#options"><b>04</b>Options</a>
+      <a href="#compare"><b>05</b>Compare with earlier data</a><a href="#columns"><b>06</b>Choose files and columns</a><a href="#hpc"><b>07</b>On an HPC</a>
+      <a href="#resources"><b>08</b>Time and space</a><a href="#offline"><b>09</b>Offline</a><a href="#rerun"><b>10</b>Re-run and update</a>
+      <a href="#reproduce"><b>11</b>Reproduce</a><a href="#help"><b>12</b>Help</a>
+    </nav></aside>
+<div class="doc">
+
+<h2 id="install"><span class="n">01</span>Install</h2>
+<p>You need Linux or macOS (Windows through WSL), <strong>Apptainer</strong> or Singularity (most HPC clusters have it: try <code>module load apptainer</code>), internet access, about 2 GB of disk per release and 6 GB of memory.</p>
+<pre><code>git clone https://github.com/nhlamulokhoza/AGMP_GWAS.git
+cd AGMP_GWAS
+./agmp_gwas setup      <span class="c"># once: builds agmp_gwas_container (about 5 minutes)</span>
+./agmp_gwas check      <span class="c"># ends with "All good." when you are ready</span></code></pre>
+<p>That is the whole installation. The folder stays tidy:</p>
+<pre class="nocopy"><code>AGMP_GWAS/
+├── agmp_gwas                     <span class="c">the only command you use</span>
+├── agmp_gwas_container.sif       <span class="c">made by setup: the workflow and all its software</span>
+├── container/                    <span class="c">the recipe for the container</span>
+├── workflow/                     <span class="c">Snakefile, scripts, default settings</span>
+├── docs/                         <span class="c">this documentation</span>
+└── results/  cache/  logs/       <span class="c">made by runs</span></code></pre>
+
+<h2 id="container"><span class="n">02</span>The container</h2>
+<p><code>agmp_gwas_container.sif</code> is one file that holds the whole workflow and every piece of software it needs, at fixed versions. Every step runs inside it, so results do not depend on what else is installed, and anyone with the same container gets the same results. You never enter it yourself.</p>
+<p>The container plus the <code>agmp_gwas</code> launcher is a complete install. To run on another computer, copy those two files; nothing else is needed.</p>
+<h3>If the container cannot be built</h3>
+<p>Some clusters do not let users build containers. Then either build it on another computer with Apptainer and copy the <code>.sif</code> file next to <code>agmp_gwas</code>, ask your HPC support to enable "fakeroot" builds, or run <code>./agmp_gwas setup --no-container</code> to use a Python environment with the same package versions instead.</p>
+
+<h2 id="run"><span class="n">03</span>Run</h2>
+<pre><code>./agmp_gwas run</code></pre>
+<p>This processes the latest GWAS Catalog release and writes <code>results/&lt;release date&gt;/</code>. When it finishes it prints where the results and the report are. If that release is already done, it finishes at once; when the Catalog publishes a new release, the same command processes it.</p>
+<pre><code>./agmp_gwas run --dry-run    <span class="c"># show what would run, run nothing</span></code></pre>
+<p>Results, caches and logs go to the <strong>work directory</strong>, which is the AGMP_GWAS folder unless you give another: <code>--workdir /scratch/me/agmp</code>.</p>
+
+<h2 id="options"><span class="n">04</span>Options <span class="tag">Optional</span></h2>
+<p>Every option has a default, so <code>./agmp_gwas run</code> alone is a complete run. The <a href="builder.html">command builder</a> lists every option with check boxes and writes the command for you.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Option</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>--previous FILE</code></td><td>Compare with data already imported into AGMP</td></tr>
+<tr><td><code>--compare-release PATH</code></td><td>Stop if the record count drops sharply against an earlier release folder</td></tr>
+<tr><td><code>--columns id,PUBMEDID,…</code></td><td>Keep only these columns in the output files</td></tr>
+<tr><td><code>--csv all</code></td><td>Files to write as CSV: <code>all</code> (default), <code>none</code>, a list, or all minus some (<code>all,-combined</code>)</td></tr>
+<tr><td><code>--excel ethnicity_report</code></td><td>Files to write as Excel too: <code>none</code> (default), <code>all</code>, or a list</td></tr>
+<tr><td><code>--gzip</code></td><td>Compress the CSV files (about a sixth of the size)</td></tr>
+<tr><td><code>--release 2026-11-02</code></td><td>A specific release instead of the latest</td></tr>
+<tr><td><code>--cores 6</code></td><td>CPU cores</td></tr>
+<tr><td><code>--workdir DIR</code></td><td>Where results, caches and logs go</td></tr>
+<tr><td><code>--no-triage</code></td><td>Skip the curation queue</td></tr>
+<tr><td><code>--slurm</code></td><td>Submit as a SLURM job (<a href="#hpc">below</a>)</td></tr>
+</tbody></table></div>
+<p>The rest: <code>./agmp_gwas run --help</code>.</p>
+
+<h2 id="compare"><span class="n">05</span>Compare with earlier data <span class="tag">Optional</span></h2>
+<p>Comparison is <strong>off unless you give the path to the earlier data</strong>. Without it every record counts as new, and no earlier output is read. There are two kinds, and you can use either or both.</p>
+<h3>Against data already in AGMP</h3>
+<p>Give the path to the file(s) imported into AGMP before: CSV or parquet with an <code>id</code> column. Repeat <code>--previous</code> for several files.</p>
+<pre><code>./agmp_gwas run --previous late2024_import/gwas_data_15092024.csv</code></pre>
+<p>Variants found there are marked as not new, and three new-only files are written: <code>intergenic</code>, <code>non_intergenic</code> and <code>combined</code>.</p>
+<h3>Against an earlier release</h3>
+<p>Give the path to the results folder of an earlier run:</p>
+<pre><code>./agmp_gwas run --compare-release results/2026-06-19</code></pre>
+<p>This adds a quality check that stops the run before export if the number of records fell by more than 10%, which catches truncated downloads and changes to the Catalog's file format.</p>
+
+<h2 id="columns"><span class="n">06</span>Choose files and columns <span class="tag">Optional</span></h2>
+<p><strong>Files.</strong> Every output file is written as CSV unless you say otherwise. Pick each file's formats with two lists: <code>--csv</code> and <code>--excel</code>. Each takes <code>all</code>, <code>none</code>, file names, or <code>all</code> minus some.</p>
+<pre><code>./agmp_gwas run --excel ethnicity_report             <span class="c"># everything as CSV, plus this one as Excel</span>
+./agmp_gwas run --csv all,-combined --gzip           <span class="c"># all but one, compressed</span>
+./agmp_gwas run --csv none --excel combined_with_old <span class="c"># a single Excel file</span></code></pre>
+<p>Excel is slow for the large files and holds at most 1,048,575 rows. The <a href="builder.html">command builder</a> has a CSV and an Excel switch for each file.</p>
+<p><strong>Columns.</strong></p>
+<p>Files have the 30 standard AGMP columns unless you choose fewer. See every column, where it comes from and how it is made with <code>./agmp_gwas columns</code> (or <code>./agmp_gwas columns geographical_region</code> for one), or in the <a href="index.html#columns">column guide</a>.</p>
+<pre><code>./agmp_gwas run --columns id,PUBMEDID,phenotype,p-value,geographical_region</code></pre>
+<p>Columns are always written in the standard order. Changing them re-runs only the export: nothing is downloaded or rebuilt. The report's column chooser writes this command for you, with a preview of the data.</p>
+<div class="callout"><p>Files for the AGMP import need all 30 columns. Use a column choice for your own analyses.</p></div>
+
+<h2 id="hpc"><span class="n">07</span>On an HPC <span class="tag">Only on a cluster</span></h2>
+<p>Do not run on a login node. Submit a job instead:</p>
+<pre><code>./agmp_gwas run --slurm</code></pre>
+<p>It writes and submits the job script, then prints the job number and its log file (<code>logs/agmp_gwas_&lt;job&gt;.out</code>). Add your usual options after <code>--slurm</code>, and these for the job's resources:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Option</th><th>Default</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>--time</code></td><td>08:00:00</td><td>Time limit</td></tr>
+<tr><td><code>--mem</code></td><td>6G</td><td>Memory</td></tr>
+<tr><td><code>--cores</code></td><td>6</td><td>CPU cores</td></tr>
+<tr><td><code>--partition</code></td><td>cluster default</td><td>Partition or queue</td></tr>
+<tr><td><code>--account</code></td><td>none</td><td>Account, if your cluster needs one</td></tr>
+</tbody></table></div>
+<pre><code>./agmp_gwas run --slurm --partition batch --previous imports/old.csv</code></pre>
+<p><strong>Internet on compute nodes.</strong> The workflow downloads data while it runs. Check from a short interactive job (<code>srun --pty bash</code>, then <code>./agmp_gwas check</code>). If compute nodes are offline, see <a href="#offline">Offline</a>.</p>
+<p><strong>Other folders.</strong> The container sees the work directory and any file you name on the command line. To make another folder visible, <code>export AGMP_GWAS_BIND=/scratch</code> first.</p>
+
+<h2 id="resources"><span class="n">08</span>Time and space</h2>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>First run</th><th>Later releases</th></tr></thead>
+<tbody>
+<tr><td>Time, 6 cores</td><td>about 4 hours</td><td>about 1 hour</td></tr>
+<tr><td>Memory</td><td colspan="2">peak about 1.5 GB; ask for 6 GB</td></tr>
+<tr><td>Disk</td><td colspan="2">about 1 GB of CSV per release (about 160 MB as <code>csv.gz</code>), plus small caches</td></tr>
+</tbody></table></div>
+<p>Most of the first run is spent waiting for Ensembl to answer lookups. Every answer is kept in <code>cache/</code>, so later releases only look up what is new. Keep that folder.</p>
+
+<h2 id="offline"><span class="n">09</span>Offline <span class="tag">Optional</span></h2>
+<p>Without internet, download the two GWAS Catalog files elsewhere (FTP, <code>releases/latest/</code>) and point the workflow at them. New variants and genes cannot be looked up offline, so this works best once the caches are filled by an earlier online run.</p>
+<pre><code>./agmp_gwas run --release 2026-11-02 \
+  --local-associations gwas-catalog-associations_ontology-annotated-full.zip \
+  --local-ancestry gwas-catalog-ancestry.tsv --no-triage</code></pre>
+
+<h2 id="rerun"><span class="n">10</span>Re-run and update</h2>
+<ul>
+  <li><strong>New Catalog release:</strong> <code>./agmp_gwas run</code>. It gets its own folder.</li>
+  <li><strong>Rebuild a release</strong> (after updating AGMP_GWAS): <code>./agmp_gwas run --rebuild</code>. Cached lookups are kept.</li>
+  <li><strong>Interrupted run:</strong> run the same command again. If it reports a lock, run once with <code>--unlock</code>.</li>
+  <li><strong>Update AGMP_GWAS:</strong> <code>git pull</code>, then <code>./agmp_gwas setup --rebuild</code> to rebuild the container with the new version.</li>
+</ul>
+
+<h2 id="reproduce"><span class="n">11</span>Reproduce a run</h2>
+<p>Every release folder holds <code>run_settings.yaml</code> (every setting used) and <code>release.json</code> (the source files with their release dates, sizes and ETags). With the same container and those settings, <code>--release</code> gives the same records. <code>./agmp_gwas version</code> prints the version inside the container.</p>
+
+<h2 id="help"><span class="n">12</span>Help</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Message</th><th>What to do</th></tr></thead>
+<tbody>
+<tr><td><code>Not set up yet</code></td><td>Run <code>./agmp_gwas setup</code>.</td></tr>
+<tr><td><code>Apptainer/Singularity is not available here</code></td><td>Load it first, e.g. <code>module load apptainer</code>.</td></tr>
+<tr><td><code>Could not build the container</code></td><td>See <a href="#container">If the container cannot be built</a>.</td></tr>
+<tr><td><code>workflow/ has changed since the container was built</code></td><td>Run <code>./agmp_gwas setup --rebuild</code>.</td></tr>
+<tr><td><code>Cannot reach the GWAS Catalog FTP</code></td><td>No internet here: run where there is, or see <a href="#offline">Offline</a>.</td></tr>
+<tr><td><code>Illegal instruction</code></td><td>Seen only outside the container, on older processors. Use the container.</td></tr>
+<tr><td><code>LockException</code></td><td>An earlier run was interrupted: run once with <code>--unlock</code>.</td></tr>
+<tr><td><code>QC check(s) failed; export skipped</code></td><td>Open <code>results/&lt;release&gt;/qc.tsv</code> to see which check failed.</td></tr>
+<tr><td>A WARN about lookups awaiting</td><td>Not an error: the next run continues them.</td></tr>
+</tbody></table></div>
+<p>Each step writes a log to <code>results/&lt;release&gt;/logs/</code>; its last lines usually say what went wrong.</p>
+
+</div>
+</div>
+</main>
+<script src="assets/data.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

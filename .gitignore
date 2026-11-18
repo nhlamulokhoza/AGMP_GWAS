@@ -1,0 +1,9 @@
+# Made by runs and setup (not part of the code)
+results/
+cache/
+logs/
+.agmp_gwas/
+.snakemake/
+agmp_gwas_container.sif
+.venv/
+__pycache__/

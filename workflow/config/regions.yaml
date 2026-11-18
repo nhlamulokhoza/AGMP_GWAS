@@ -1,0 +1,63 @@
+# Country of recruitment -> AGMP geographical region.
+# Names are matched case-insensitively after trimming. Add GWAS Catalog
+# spellings to `aliases` rather than editing the region lists.
+
+regions:
+  Southern Africa:
+    [Angola, Botswana, Eswatini, Swaziland, Lesotho, Malawi, Mozambique,
+     Namibia, South Africa, Zambia, Zimbabwe]
+  East Africa:
+    [Comoros, Djibouti, Eritrea, Ethiopia, Kenya, Madagascar, Mauritius,
+     Rwanda, Seychelles, Somalia, South Sudan, Sudan, Tanzania, Uganda]
+  West Africa:
+    [Benin, Burkina Faso, Cape Verde, Cabo Verde, Ivory Coast, Gambia, Ghana,
+     Guinea, Guinea-Bissau, Liberia, Mali, Niger, Nigeria, Senegal,
+     Sierra Leone, Togo]
+  North Africa:
+    [Algeria, Egypt, Libya, Mauritania, Morocco, Tunisia, Western Sahara]
+  Central Africa:
+    [Burundi, Cameroon, Central African Republic, Chad, Congo Republic,
+     Democratic Republic of the Congo, Equatorial Guinea, Gabon,
+     São Tomé and Príncipe]
+  African-American / Afro-Caribbean:
+    [Canada, United States, USA, U.S., Mexico, Guatemala, Belize, El Salvador,
+     Honduras, Nicaragua, Costa Rica, Panama, Antigua and Barbuda, Bahamas,
+     Barbados, Cuba, Dominica, Dominican Republic, Grenada, Haiti, Jamaica,
+     Saint Kitts and Nevis, Saint Lucia, Saint Vincent and the Grenadines,
+     Trinidad and Tobago, Colombia, Venezuela, Guyana, Suriname, Brazil,
+     Ecuador, Peru, Bolivia, Chile, Argentina, Paraguay, Uruguay,
+     Puerto Rico, Guadeloupe, Martinique, Netherlands Antilles, Curaçao,
+     Aruba, U.S. Virgin Islands, Bermuda, French Guiana]
+  Greater Middle Eastern:
+    [Greater Middle Eastern (Middle Eastern, North African or Persian),
+     Bahrain, Cyprus, Iran, Iraq, Israel, Jordan, Kuwait, Lebanon, Oman,
+     Palestine, Qatar, Saudi Arabia, Syria, Turkey, United Arab Emirates,
+     Yemen]
+  NR: [NR]
+  Other: [Other]
+
+# GWAS Catalog spelling -> name used above
+aliases:
+  United Republic of Tanzania: Tanzania
+  Congo: Congo Republic
+  Republic of the Congo: Congo Republic
+  Democratic Republic of Congo: Democratic Republic of the Congo
+  Côte d'Ivoire: Ivory Coast
+  Cote d'Ivoire: Ivory Coast
+  The Gambia: Gambia
+  Libyan Arab Jamahiriya: Libya
+  Sao Tome and Principe: São Tomé and Príncipe
+  Iran (Islamic Republic of): Iran
+  Occupied Palestinian Territory: Palestine
+  Syrian Arab Republic: Syria
+  United States of America: United States
+  Curacao: Curaçao
+
+# Fallback when no country maps: broad ancestral category -> region label
+ancestry_fallback:
+  Greater Middle Eastern (Middle Eastern, North African or Persian): Greater Middle Eastern
+  African unspecified: African unspecified
+  African American or Afro-Caribbean: African-American / Afro-Caribbean
+  Sub-Saharan African: Sub-Saharan African
+  Other: Other
+  NR: NR

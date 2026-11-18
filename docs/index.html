@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" class="snap">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGMP_GWAS</title>
+<meta name="description" content="AGMP_GWAS curates GWAS Catalog associations relevant to African populations and the diaspora for the African Genomic Medicine Portal.">
+<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+
+<!-- ============================================================ hero -->
+<section class="panel hero" id="top" data-label="AGMP_GWAS">
+  <div class="wrap">
+    <h1 class="display reveal">AGMP<em>_</em>GWAS</h1>
+    <p class="kicker reveal" style="--d:.1s">GWAS Catalog curation for the <mark>African Genomic Medicine Portal</mark></p>
+    <nav class="journey reveal" style="--d:.2s" aria-label="The four stages">
+      <a href="#how"><b>01</b><span>Collect</span></a>
+      <a href="#how"><b>02</b><span>Curate</span></a>
+      <a href="#sources"><b>03</b><span>Annotate</span></a>
+      <a href="#outputs"><b>04</b><span>Check</span></a>
+    </nav>
+    <div class="pills reveal" style="--d:.3s;justify-content:center;margin-top:3.5rem"><a class="pill" href="guide.html#install">Get started</a><a class="pill soft" href="builder.html">Build your command</a></div>
+  </div>
+  <span class="scrollcue" aria-hidden="true">Scroll</span>
+</section>
+
+<!-- =========================================================== about -->
+<section class="panel" id="about" data-label="About">
+  <div class="wrap">
+    <div class="intro" style="max-width:none">
+      <span class="num">01</span>
+      <h2 class="big">A release in. <mark>Curated files</mark> out.</h2>
+      <p class="lede">One command takes each new GWAS Catalog release through five stages, inside one container.</p>
+    </div>
+    <figure class="wf"><svg class="wf-wide" viewBox="0 0 1400 400" role="img" aria-labelledby="wfT"><title id="wfT">Five stages, release, select, resolve, annotate and check, lead to three outputs: AGMP files, a report and a curation queue.</title><line class="wf-flow" x1="176" y1="230" x2="314" y2="230"/><line class="wf-flow" x1="406" y1="230" x2="544" y2="230"/><line class="wf-flow" x1="636" y1="230" x2="774" y2="230"/><line class="wf-flow" x1="866" y1="230" x2="1004" y2="230"/><g class="wf-node"><circle cx="130" cy="230" r="42"/><text class="wf-n" x="130" y="238" text-anchor="middle">01</text><text class="wf-t" x="130" y="310" text-anchor="middle">Release</text></g><g class="wf-node"><circle cx="360" cy="230" r="42"/><text class="wf-n" x="360" y="238" text-anchor="middle">02</text><text class="wf-t" x="360" y="310" text-anchor="middle">Select</text></g><g class="wf-node"><circle cx="590" cy="230" r="42"/><text class="wf-n" x="590" y="238" text-anchor="middle">03</text><text class="wf-t" x="590" y="310" text-anchor="middle">Resolve</text></g><g class="wf-node"><circle cx="820" cy="230" r="42"/><text class="wf-n" x="820" y="238" text-anchor="middle">04</text><text class="wf-t" x="820" y="310" text-anchor="middle">Annotate</text></g><g class="wf-node"><circle cx="1050" cy="230" r="42"/><text class="wf-n" x="1050" y="238" text-anchor="middle">05</text><text class="wf-t" x="1050" y="310" text-anchor="middle">Check</text></g><path class="wf-flow" d="M1096,230 C1160,230 1160,140 1222,140"/><circle class="wf-out" cx="1234" cy="140" r="10"/><text class="wf-t" x="1258" y="147">AGMP files</text><path class="wf-flow" d="M1096,230 C1160,230 1160,230 1222,230"/><circle class="wf-out" cx="1234" cy="230" r="10"/><text class="wf-t" x="1258" y="237">Report</text><path class="wf-flow" d="M1096,230 C1160,230 1160,320 1222,320"/><circle class="wf-out" cx="1234" cy="320" r="10"/><text class="wf-t" x="1258" y="327">Curation queue</text></svg><svg class="wf-tall" viewBox="0 0 360 820" role="img" aria-labelledby="wfT2"><title id="wfT2">Five stages lead to three outputs: AGMP files, a report and a curation queue.</title><line class="wf-flow" x1="60" y1="88" x2="60" y2="132"/><g class="wf-node"><circle cx="60" cy="50" r="34"/><text class="wf-n" x="60" y="57" text-anchor="middle">01</text><text class="wf-t" x="118" y="57">Release</text></g><line class="wf-flow" x1="60" y1="208" x2="60" y2="252"/><g class="wf-node"><circle cx="60" cy="170" r="34"/><text class="wf-n" x="60" y="177" text-anchor="middle">02</text><text class="wf-t" x="118" y="177">Select</text></g><line class="wf-flow" x1="60" y1="328" x2="60" y2="372"/><g class="wf-node"><circle cx="60" cy="290" r="34"/><text class="wf-n" x="60" y="297" text-anchor="middle">03</text><text class="wf-t" x="118" y="297">Resolve</text></g><line class="wf-flow" x1="60" y1="448" x2="60" y2="492"/><g class="wf-node"><circle cx="60" cy="410" r="34"/><text class="wf-n" x="60" y="417" text-anchor="middle">04</text><text class="wf-t" x="118" y="417">Annotate</text></g><g class="wf-node"><circle cx="60" cy="530" r="34"/><text class="wf-n" x="60" y="537" text-anchor="middle">05</text><text class="wf-t" x="118" y="537">Check</text></g><path class="wf-flow" d="M60,568 C60,620 60,650 86,650"/><circle class="wf-out" cx="98" cy="650" r="10"/><text class="wf-t" x="122" y="657">AGMP files</text><path class="wf-flow" d="M60,568 C60,690 60,720 86,720"/><circle class="wf-out" cx="98" cy="720" r="10"/><text class="wf-t" x="122" y="727">Report</text><path class="wf-flow" d="M60,568 C60,760 60,790 86,790"/><circle class="wf-out" cx="98" cy="790" r="10"/><text class="wf-t" x="122" y="797">Curation queue</text></svg></figure>
+  </div>
+</section>
+
+<!-- ==================================================== how it works -->
+<section class="panel" id="how" data-label="How it works">
+  <div class="wrap split">
+    <div class="intro">
+      <span class="num">02</span>
+      <h2 class="big">One command.<br><mark>Eight steps.</mark></h2>
+      <p class="lede"><code>./agmp_gwas run</code> takes the latest release all the way to files AGMP can import, and stops if anything looks wrong.</p>
+    </div>
+    <div class="track">
+      <div><h4>Fetch</h4><p>Reads the latest release into memory.</p></div>
+      <div><h4>Select</h4><p>Keeps African and diaspora studies.</p></div>
+      <div><h4>Resolve</h4><p>Makes every variant ID an rsID.</p></div>
+      <div><h4>Annotate</h4><p>Adds genes, consequence and region.</p></div>
+      <div><h4>Check</h4><p>Stops before export if a check fails.</p></div>
+      <div><h4>Export</h4><p>Writes the files you choose.</p></div>
+      <div><h4>Queue</h4><p>Ranks unclear studies for curators.</p></div>
+      <div><h4>Report</h4><p>Lets you explore the release.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= sources -->
+<section class="panel" id="sources" data-label="Sources">
+  <div class="wrap split center">
+    <div class="intro">
+      <span class="num">03</span>
+      <h2 class="big">Every resource,<br><mark>one table.</mark></h2>
+      <p class="lede">Eight resources feed AGMP_GWAS. Point at one to see what it is and which columns it fills.</p>
+    </div>
+    <div>
+      <div class="flow" id="flow"></div>
+      <div class="respills" id="resPills" role="group" aria-label="Resources"></div>
+      <div class="flowcard" id="flowCard" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= columns -->
+<section class="panel" id="columns" data-label="Columns">
+  <div class="wrap split">
+    <div class="intro">
+      <span class="num">04</span>
+      <h2 class="big">Thirty columns.<br><mark>Every step shown.</mark></h2>
+      <p class="lede">Point at a column to open it: what it means, where it comes from, and what is done to it.</p>
+      <details class="quiet"><summary>Applied to every record</summary><ol id="recordSteps"></ol></details>
+    </div>
+    <div>
+      <div class="filterbar" id="colFilter" role="group" aria-label="Show the columns from one resource"></div>
+      <div class="collist" id="colList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= outputs -->
+<section class="panel" id="outputs" data-label="Outputs">
+  <div class="wrap split center">
+    <div class="intro">
+      <span class="num">05</span>
+      <h2 class="big">Ready to <mark>import.</mark></h2>
+      <p class="lede">Thirteen files, each with the same columns. Write each as CSV, Excel, or both.</p>
+      <details class="quiet"><summary>What else is in a results folder</summary>
+<pre class="nocopy"><code>report.html               <span class="c">interactive report</span>
+export/                   <span class="c">these files, and MANIFEST.tsv</span>
+qc.tsv                    <span class="c">quality checks</span>
+curation_queue.tsv        <span class="c">unresolved studies, ranked</span>
+unmapped_variants.tsv     <span class="c">IDs not mapped, and why</span>
+release.json              <span class="c">source files, dates, counts</span>
+run_settings.yaml         <span class="c">every setting used</span></code></pre></details>
+    </div>
+    <div>
+      <div class="filepills" id="filePills"></div>
+      <p class="filehint" id="fileHint" aria-live="polite">Point at a file to see what it holds.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== report -->
+<section class="panel" id="report" data-label="Report">
+  <div class="wrap split center">
+    <div class="intro">
+      <span class="num">06</span>
+      <h2 class="big">See what changed,<br><mark>before you import.</mark></h2>
+      <p class="lede"><code>report.html</code> opens in any browser and works offline.</p>
+      <div class="pills"><a class="pill" href="guide.html#install">Install AGMP_GWAS</a><a class="pill soft" href="builder.html">Build your command</a></div>
+    </div>
+    <div class="features">
+      <div><h4>Quality checks</h4><p>Every check, with its status.</p></div>
+      <div><h4>Linked charts</h4><p>Click a bar to filter the rest.</p></div>
+      <div><h4>Completeness</h4><p>How full each column is.</p></div>
+      <div><h4>Choose columns</h4><p>Preview, then copy the command.</p></div>
+      <div><h4>Curation queue</h4><p>Studies waiting for a curator.</p></div>
+      <div><h4>Settings</h4><p>All you need to reproduce it.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<script src="assets/data.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  "use strict";
+  const A = window.AGMP;
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const R = A.resources, C = A.columns;
+  const rById = Object.fromEntries(R.map(r => [r.id, r]));
+  const feeds = id => C.filter(c => id in c.sources).map(c => c.name);
+  const fedText = id => id === "literature" ? "curation queue only" : `${feeds(id).length} column${feeds(id).length === 1 ? "" : "s"}`;
+
+  // ---------------------------------------------------- data-flow diagram
+  const W = 1000, H = 330, top = 36, hubX = W / 2, hubY = 280, hubR = 36;
+  const xs = R.map((_, i) => 50 + i * (W - 100) / (R.length - 1));
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Eight resources flow into AGMP_GWAS">`;
+  R.forEach((r, i) => {
+    const x = xs[i], y = top + 50;
+    s += `<path class="wire" data-r="${r.id}" d="M${x},${y} C${x},${y + 110} ${hubX},${hubY - 120} ${hubX},${hubY - hubR}"/>`;
+  });
+  R.forEach((r, i) => {
+    const x = xs[i];
+    s += `<g class="src" data-r="${r.id}" tabindex="0" role="button" aria-label="${esc(r.name)}, ${esc(fedText(r.id))}">` +
+      `<rect x="${x - 58}" y="0" width="116" height="${top + 62}" fill="transparent"/>` +
+      `<text x="${x}" y="${top - 16}" text-anchor="middle">${esc(r.short)}</text>` +
+      `<text class="sub" x="${x}" y="${top + 2}" text-anchor="middle">${esc(fedText(r.id))}</text>` +
+      `<circle class="dot" cx="${x}" cy="${top + 50}" r="6"/></g>`;
+  });
+  s += `<circle class="hub" cx="${hubX}" cy="${hubY}" r="${hubR}"/>` +
+       `<text class="hubnum" x="${hubX}" y="${hubY + 8}" text-anchor="middle">30</text>` +
+       `<text class="hubtext" x="${hubX + hubR + 16}" y="${hubY + 8}">columns</text></svg>`;
+  const flow = document.getElementById("flow");
+  flow.innerHTML = s;
+  const card = document.getElementById("flowCard");
+  const idle = `<p class="note">Point at a resource above.</p>`;
+  card.innerHTML = idle;
+  function focus(id) {
+    flow.querySelectorAll(".wire").forEach(w => w.classList.toggle("on", w.dataset.r === id));
+    if (!id) { card.innerHTML = idle; return; }
+    const r = rById[id], f = feeds(id);
+    card.innerHTML = `<h4>${esc(r.name)}</h4><p>${esc(r.what)}</p>` +
+      `<div class="cols">${f.length ? f.map(n => `<span>${esc(n)}</span>`).join("") : "<span>the curation queue</span>"}</div>`;
+  }
+  flow.querySelectorAll(".src").forEach(el => {
+    el.addEventListener("mouseenter", () => focus(el.dataset.r));
+    el.addEventListener("focus", () => focus(el.dataset.r));
+    el.addEventListener("click", () => {
+      if (el.dataset.r === "literature") return;
+      setFilter(el.dataset.r); document.getElementById("columns").scrollIntoView();
+    });
+    el.addEventListener("keydown", e => { if (e.key === "Enter") el.click(); });
+  });
+  flow.addEventListener("mouseleave", () => focus(null));
+  // small screens: tap a resource pill
+  const rp = document.getElementById("resPills");
+  rp.innerHTML = R.map(r => `<button type="button" data-r="${r.id}">${esc(r.short)}</button>`).join("");
+  rp.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    rp.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    focus(b.dataset.r);
+  });
+
+  // -------------------------------------------- columns, open on hover
+  document.getElementById("recordSteps").innerHTML = A.record_steps.map(x => `<li>${esc(x)}</li>`).join("");
+  const ORDER = ["Variant", "Gene", "Association", "Population", "Publication", "Fixed"];
+  const shown = ORDER.flatMap(g => C.filter(c => c.group === g));
+  const list = document.getElementById("colList");
+  list.innerHTML = shown.map((c, i) =>
+    `<div class="colrow" tabindex="0" data-sources="${Object.keys(c.sources).join(" ")}">` +
+    `<span class="i">${String(i + 1).padStart(2, "0")}</span>` +
+    `<span class="name">${esc(c.name)}</span><span class="short">${esc(c.group === "Fixed" ? "Fixed value" : c.group)}</span>` +
+    `<div class="more"><div><p style="margin:.5rem 0 0;color:var(--ink-2);font-size:.9rem">${esc(c.desc)}</p><div class="src">` +
+    Object.entries(c.sources).map(([k, v]) => `<span><b>${esc(rById[k].short)}</b> · ${esc(v)}</span>`).join("") +
+    `</div><ol>${c.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div></div></div>`).join("");
+  list.addEventListener("click", e => { const r = e.target.closest(".colrow"); if (r) r.classList.toggle("open"); });
+  const fbar = document.getElementById("colFilter");
+  const opts = [["", "All"], ...R.filter(r => r.id !== "literature").map(r => [r.id, r.short])];
+  fbar.innerHTML = opts.map(([id, t]) => `<button type="button" class="chip" data-f="${id}" aria-pressed="${id === ""}">${esc(t)}</button>`).join("");
+  function setFilter(id) {
+    fbar.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.f === (id || ""))));
+    list.querySelectorAll(".colrow").forEach(c => { c.hidden = !!id && !c.dataset.sources.split(" ").includes(id); });
+  }
+  fbar.addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) setFilter(b.dataset.f); });
+
+  // ---------------------------------------------------- output files
+  const hint = document.getElementById("fileHint");
+  const fp = document.getElementById("filePills");
+  fp.innerHTML = A.splits.map(sp => `<span tabindex="0" data-d="${esc(sp.desc)}"${sp.new_only ? " data-new" : ""}>${esc(sp.name)}</span>`).join("");
+  fp.querySelectorAll("span").forEach(el => {
+    const show = () => {
+      fp.querySelectorAll("span").forEach(x => x.classList.toggle("on", x === el));
+      hint.innerHTML = `<code>${esc(el.textContent)}</code><br>${esc(el.dataset.d)}`;
+    };
+    el.addEventListener("mouseenter", show); el.addEventListener("focus", show);
+  });
+})();
+</script>
+</body>
+</html>

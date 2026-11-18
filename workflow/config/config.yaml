@@ -1,0 +1,145 @@
+# AGMP_GWAS: default settings
+#
+# You rarely need to edit this file: `agmp_gwas run` options change the common
+# settings, and `--settings my.yaml` changes any other (only the keys you give).
+# Paths: regions and lexicon are relative to this workflow folder; caches,
+# results and input files are relative to the work directory (where you run).
+
+# ---------------------------------------------------------------------------
+# Source data (streamed into memory; nothing is saved to disk)
+# ---------------------------------------------------------------------------
+catalog:
+  base_url: https://ftp.ebi.ac.uk/pub/databases/gwas/releases/latest
+  associations: gwas-catalog-associations_ontology-annotated-full.zip
+  ancestry: gwas-catalog-ancestry.tsv
+  # "auto" = use the release date of the latest files on the FTP (YYYY-MM-DD).
+  # If outputs for that release already exist, Snakemake has nothing to do.
+  release: auto
+  # Offline fallback for compute nodes without internet: point these at local
+  # copies of the two files. Leave empty to stream from base_url.
+  local_associations: ""
+  local_ancestry: ""
+
+# ---------------------------------------------------------------------------
+# Study selection
+# ---------------------------------------------------------------------------
+selection:
+  # Broad ancestral categories that count as explicit African / GME evidence
+  # (case-insensitive).
+  explicit_ancestry_regex: "Africa|Greater Middle Eastern"
+  # Categories retained but flagged "unresolved" for triage and manual curation.
+  unresolved_ancestry_regex: "\\bNR\\b|\\bOther\\b"
+  # Also keep (as unresolved) rows recruited in an African country whatever
+  # their ancestry label, e.g. South African cohorts labelled "European".
+  include_african_recruitment: true
+  # Also keep (as unresolved) rows whose own sample description names African
+  # or diaspora samples although the ancestry label does not.
+  include_african_sample_description: true
+  sample_description_regex: >-
+    (?<![\w-])(?:African|Africans|Afro-Caribbean|Afro-Brazilian|Afro-Colombian|Afro-descendant|Black
+    (?:American|British|Caribbean|African|women|men|individuals|participants)|Nigerian|Ghanaian|Kenyan|Ugandan|Ethiopian|Tanzanian|Cameroonian|Malawian|Gambian|Senegalese|Sudanese|Egyptian|Moroccan|Tunisian|Algerian|Yoruba|Igbo|Hausa|Akan|Bantu|Zulu|Xhosa|Maasai|Luhya)(?![\w-])
+
+# ---------------------------------------------------------------------------
+# Variant IDs
+# ---------------------------------------------------------------------------
+variants:
+  # rsIDs merged in dbSNP are replaced by the current rsID (SNP_ID_CURRENT).
+  use_current_rsid_for_merged: true
+  # Resolve positional IDs (chr7:107194965) to rsIDs via Ensembl, checking the
+  # genome build per paper and requiring the reported allele to match.
+  rescue_positional: true
+  rescue_cache: cache/variant_rescue.sqlite
+  rescue_workers: 24              # requests are latency-bound; the rate cap below still applies
+  rescue_rate_per_sec: 12          # per Ensembl server; Ensembl allows 15
+  rescue_max_new_lookups: 150000   # cap per run; the rest continue next run
+  # Give rescued variants a GWAS-Catalog-style mapped gene: the named genes
+  # they fall in, otherwise the nearest named genes up/downstream ("A - B").
+  flank_genes: true
+  flank_window: 500000
+  # Fill the `context` column (variant consequence) from Ensembl VEP for
+  # variants the GWAS Catalog gives none, e.g. all rescued positional variants.
+  vep_context: true
+  vep_batch: 200
+  vep_workers: 4
+  vep_max_new_lookups: 100000
+  build_detection_sample: 25
+  build_min_match_rate: 0.5
+  # Keep positional IDs that could not be resolved, as "chrN:pos". Off by
+  # default because the AGMP `id` column has always held rsIDs. They are
+  # always listed in unmapped_variants.tsv.
+  keep_unresolved_positional: false
+
+# ---------------------------------------------------------------------------
+# Quality control (the export runs only if these pass)
+# ---------------------------------------------------------------------------
+qc:
+  min_associations_total: 500000
+  min_records: 100000
+  # With compare.previous_release: fail if records fall by more than this
+  # fraction vs the previous release
+  max_record_drop_fraction: 0.10
+  min_numeric_pvalue_fraction: 0.99
+  # WARN (not fail) below this share of non-intergenic records with a symbol
+  min_gene_symbol_fraction: 0.97
+  # WARN below this share of records with a variant consequence (context)
+  min_context_fraction: 0.95
+
+# ---------------------------------------------------------------------------
+# Comparison with earlier data (optional; both are off by default)
+# ---------------------------------------------------------------------------
+compare:
+  # Files already imported into AGMP (CSV or parquet with an "id" column).
+  # Variants found in them are marked as not new, and the export adds the
+  # new-only files (intergenic, non_intergenic, combined). Leave empty to skip.
+  # Command line: agmp_gwas run --previous FILE
+  previous_imports: []
+  # Path to an earlier release's results folder (results/<date>) or its
+  # release.json. Adds a QC check that fails if the record count dropped by
+  # more than qc.max_record_drop_fraction. Leave empty to skip.
+  # Command line: agmp_gwas run --compare-release results/2026-06-19
+  previous_release: ""
+
+# ---------------------------------------------------------------------------
+# Gene annotation (Ensembl REST + UniProt), cached between runs
+# ---------------------------------------------------------------------------
+annotation:
+  cache: cache/gene_annotation.parquet
+  cache_max_age_days: 180
+  ensembl_batch: 1000
+  ensembl_workers: 4
+  idmapping_batch: 2000
+  function_max_chars: 150
+
+# ---------------------------------------------------------------------------
+# NLP triage of unresolved studies
+# ---------------------------------------------------------------------------
+triage:
+  # Rank unresolved studies for manual curation (curation_queue.tsv)
+  enabled: true
+  lexicon: config/lexicon.tsv
+  cache: cache/literature.sqlite
+  # Optional: Europe PMC open-access full text (methods/participants sections)
+  # for studies still ambiguous after the abstract. Only matching sentences
+  # are stored, never the full text.
+  fulltext: true
+  fulltext_max_papers: 1500
+  fulltext_workers: 4
+  high_score: 4
+  medium_score: 2
+
+# ---------------------------------------------------------------------------
+# Export for AGMP import
+# ---------------------------------------------------------------------------
+export:
+  # Which output files to write, as CSV and/or Excel: "all", "none", or a list
+  # of file names (see `agmp_gwas columns` for the list), or "all" minus some
+  # ("all,-combined"). Command line: --csv all,-combined --excel ethnicity_report
+  csv: all
+  excel: none        # Excel is slow for the large files; each must stay under 1,048,575 rows
+  gzip: false        # write the CSV files compressed (.csv.gz, about a sixth of the size)
+  # "all" = the 30 standard AGMP columns, or a list of the ones to keep
+  # (always written in the standard order). Command line: --columns id,PUBMEDID,...
+  columns: all
+
+results_dir: results
+regions: config/regions.yaml

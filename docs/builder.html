@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>document.documentElement.classList.add("js")</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Builder</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main>
+<section class="pagehead">
+  <div class="wrap">
+    
+    <h1 class="display">Build your command.</h1>
+    <p class="lede">Tick what you want. Copy the command. Paste it in the AGMP_GWAS folder. <mark>Anything you leave alone keeps its default.</mark></p>
+  </div>
+</section>
+
+<div>
+<form class="builder" id="b" onsubmit="return false" autocomplete="off">
+<div class="opts">
+
+<fieldset>
+  <legend><b>01</b>Where</legend>
+  <p class="why">Default: this computer.</p>
+  <div class="seg" role="radiogroup" aria-label="Where it runs">
+    <label><input type="radio" name="where" value="local" checked>This computer</label>
+    <label><input type="radio" name="where" value="slurm">SLURM cluster job</label>
+  </div>
+  <div id="slurmBox" hidden>
+    <div class="row">
+      <div class="field"><label for="time">Time limit</label><input type="text" id="time" placeholder="08:00:00"><div class="d">A first run takes about 4 hours.</div></div>
+      <div class="field"><label for="mem">Memory</label><input type="text" id="mem" placeholder="6G"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="partition">Partition</label><input type="text" id="partition" placeholder="cluster default"></div>
+      <div class="field"><label for="account">Account</label><input type="text" id="account" placeholder="only if your cluster needs one"></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="field"><label for="cores">CPU cores</label><input type="number" id="cores" min="1" max="128" placeholder="automatic"><div class="d">Empty: up to 6, or the SLURM allocation.</div></div>
+    <div class="field"><label for="workdir">Work directory</label><input type="text" id="workdir" placeholder="the AGMP_GWAS folder"><div class="d">Where results, caches and logs go.</div></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend><b>02</b>Which release</legend>
+  <p class="why">Default: the latest.</p>
+  <div class="seg" role="radiogroup" aria-label="Which release">
+    <label><input type="radio" name="rel" value="latest" checked>The latest</label>
+    <label><input type="radio" name="rel" value="date">A specific release</label>
+  </div>
+  <div class="field" id="relBox" hidden><label for="release">Release date</label><input type="text" id="release" placeholder="2026-11-02"><div class="d">YYYY-MM-DD, as in the name of a results folder.</div></div>
+</fieldset>
+
+<fieldset>
+  <legend><b>03</b>Compare with earlier data <span class="tag">Optional</span></legend>
+  <p class="why">Give the path to the earlier data you want to compare with. Leave both empty to treat every record as new.</p>
+  <div class="field"><label for="prevFiles">Earlier AGMP import file(s), one path per line</label>
+    <textarea id="prevFiles" placeholder="late2024_import/gwas_data_15092024.csv"></textarea>
+    <div class="d">CSV or parquet with an <code>id</code> column. Variants found there are marked as not new, and the three new-only files are written.</div></div>
+  <div class="field"><label for="relPath">Earlier release folder</label>
+    <input type="text" id="relPath" placeholder="results/2026-06-19">
+    <div class="d">A <code>results/&lt;date&gt;</code> folder from an earlier run. The run stops before export if records fell by more than 10%.</div></div>
+</fieldset>
+
+<fieldset>
+  <legend><b>04</b>Output files <span class="tag">Optional</span></legend>
+  <p class="why">By default every file is written as CSV. Choose CSV, Excel or both for each file.</p>
+  <div class="mini">
+    <button type="button" class="chip" data-files="csv">Every file as CSV</button>
+    <button type="button" class="chip" data-files="excel">Every file as Excel</button>
+    <button type="button" class="chip" data-files="both">Both</button>
+    <button type="button" class="chip" data-files="none">Clear</button>
+  </div>
+  <div class="files" id="files"></div>
+  <label class="opt" style="margin-top:12px"><input type="checkbox" id="gzip"><span class="t">Compress the CSV files</span><span class="d">Writes .csv.gz, about a sixth of the size.</span></label>
+  <div class="group-h">Columns</div>
+  <div class="mini"><button type="button" class="chip" data-cols="all">All 30 (AGMP standard)</button><button type="button" class="chip" data-cols="core">Core</button><button type="button" class="chip" data-cols="none">None</button></div>
+  <div id="cols"></div>
+</fieldset>
+
+<fieldset>
+  <legend><b>05</b>What to include <span class="tag">Optional</span></legend>
+  <p class="why">Everything is included by default.</p>
+  <label class="opt"><input type="checkbox" id="rescue" checked><span class="t">Convert positional variant IDs to rsIDs</span><span class="d">Recovers variants reported as chr:position (about 32,000 in the 2026-11-02 release).</span></label>
+  <label class="opt"><input type="checkbox" id="flank" checked><span class="t">Nearest genes for converted intergenic variants</span><span class="d">Fills the mapped gene as "UP - DOWN", as the GWAS Catalog does.</span></label>
+  <label class="opt"><input type="checkbox" id="vep" checked><span class="t">Variant consequence from Ensembl VEP</span><span class="d">Fills <code>context</code> where the Catalog gives none. Adds about 2 hours to the first run.</span></label>
+  <label class="opt"><input type="checkbox" id="keepPos"><span class="t">Keep positional IDs that could not be converted</span><span class="d">As chrN:pos in <code>id</code>. Off by default: AGMP's <code>id</code> holds rsIDs.</span></label>
+  <label class="opt"><input type="checkbox" id="countryRoute" checked><span class="t">Studies recruited in an African country, whatever their ancestry label</span><span class="d">Kept as unresolved, for curation.</span></label>
+  <label class="opt"><input type="checkbox" id="descRoute" checked><span class="t">Studies whose sample description names African samples</span><span class="d">Kept as unresolved, for curation.</span></label>
+  <label class="opt"><input type="checkbox" id="triage" checked><span class="t">Curation queue for unresolved studies</span><span class="d">Ranks studies for manual curation from their abstracts.</span></label>
+  <label class="opt" id="fulltextOpt"><input type="checkbox" id="fulltext" checked><span class="t">Also read open-access full text</span><span class="d">Methods sections from Europe PMC, when the abstract does not settle it.</span></label>
+</fieldset>
+
+<fieldset>
+  <legend><b>06</b>Advanced <span class="tag">Optional</span></legend>
+  <label class="opt"><input type="checkbox" id="dry"><span class="t">Dry run</span><span class="d">Show what would run, run nothing.</span></label>
+  <label class="opt"><input type="checkbox" id="rebuild"><span class="t">Rebuild this release</span><span class="d">Even if its results exist. Cached lookups are kept.</span></label>
+  <label class="opt"><input type="checkbox" id="unlock"><span class="t">Unlock after an interrupted run</span><span class="d">Use once if a run reports a lock.</span></label>
+  <label class="opt"><input type="checkbox" id="offline"><span class="t">Use local copies of the GWAS Catalog files</span><span class="d">For computers without internet. Needs a specific release.</span></label>
+  <div id="offlineBox" hidden>
+    <div class="field"><label for="locAssoc">Associations file (.zip)</label><input type="text" id="locAssoc" placeholder="gwas-catalog-associations_ontology-annotated-full.zip"></div>
+    <div class="field"><label for="locAnc">Ancestry file (.tsv)</label><input type="text" id="locAnc" placeholder="gwas-catalog-ancestry.tsv"></div>
+  </div>
+</fieldset>
+</div>
+
+<div class="out">
+  <div class="box">
+    <h3>Your command</h3>
+    <pre class="cmd nocopy" id="cmd" aria-live="polite"></pre>
+    <div class="pills" style="justify-content:flex-start">
+      <button type="button" class="pill" id="copy">Copy command</button>
+      <button type="button" class="pill soft" id="reset">Reset</button>
+    </div>
+    <div id="warn"></div>
+    <div style="margin-top:18px;font-size:15px">What it will do</div>
+    <ul class="summary" id="summary"></ul>
+  </div>
+  <p class="note" style="margin-top:12px">Run it in the AGMP_GWAS folder after <code>./agmp_gwas setup</code>. More in the <a href="guide.html">guide</a>.</p>
+</div>
+</form>
+</div>
+</main>
+<script src="assets/data.js"></script>
+<script src="assets/site.js"></script>
+<script>
+(function () {
+  "use strict";
+  const A = window.AGMP;
+  const $ = s => document.querySelector(s);
+  const v = id => document.getElementById(id);
+  const form = $("#b");
+  const q = s => /^[A-Za-z0-9_./:=,@+-]+$/.test(s) ? s : "'" + s.replace(/'/g, "'\\''") + "'";
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const opt = (id, title, desc, checked, extra = "") =>
+    `<label class="opt" ${extra}><input type="checkbox" id="${id}"${checked ? " checked" : ""}><span class="t">${title}</span>${desc ? `<span class="d">${esc(desc)}</span>` : ""}</label>`;
+
+  const FILES = A.splits.map(s => s.name);
+  $("#files").innerHTML = A.splits.map(s =>
+    `<div class="file"${s.new_only ? ' data-newonly="1"' : ""}><div><div class="t"><code>${s.name}</code></div><div class="d">${esc(s.desc)}</div></div>` +
+    `<div class="fmt" role="group" aria-label="Formats for ${s.name}">` +
+    `<label><input type="checkbox" id="csv-${s.name}"${A.default_csv.includes(s.name) ? " checked" : ""}>CSV</label>` +
+    `<label><input type="checkbox" id="xls-${s.name}"${A.default_excel.includes(s.name) ? " checked" : ""}>Excel</label></div></div>`).join("");
+  const groups = {};
+  for (const c of A.columns) (groups[c.group] = groups[c.group] || []).push(c);
+  $("#cols").innerHTML = ["Variant", "Gene", "Association", "Population", "Publication", "Fixed"].filter(g => groups[g]).map(g =>
+    `<div class="group-h">${g === "Fixed" ? "Fixed values" : g}</div><div class="colgrid">` +
+    groups[g].map(c => opt("col-" + c.name, `<code>${c.name}</code>`, c.desc, true)).join("") + "</div>").join("");
+
+  const ALLCOLS = A.columns.map(c => c.name);
+  const CORE = ["id", "PUBMEDID", "phenotype", "p-value", "geographical_region", "origin_of_participants",
+                "broad_ancestral_category", "gene_symbol_external", "context", "id_in_source"];
+
+  document.querySelectorAll("[data-cols]").forEach(b => b.addEventListener("click", () => {
+    const want = b.dataset.cols === "all" ? ALLCOLS : b.dataset.cols === "none" ? [] : CORE;
+    ALLCOLS.forEach(c => v("col-" + c).checked = want.includes(c)); update();
+  }));
+  document.querySelectorAll("[data-files]").forEach(b => b.addEventListener("click", () => {
+    const m = b.dataset.files;
+    FILES.forEach(f => { v("csv-" + f).checked = m === "csv" || m === "both"; v("xls-" + f).checked = m === "excel" || m === "both"; });
+    update();
+  }));
+  // a file list for the command: "all", "none", or the names
+  // the shorter of "a,b,c" and "all,-x,-y"
+  const listArg = sel => {
+    if (sel.length === FILES.length) return "all";
+    if (!sel.length) return "none";
+    const minus = "all," + FILES.filter(f => !sel.includes(f)).map(f => "-" + f).join(",");
+    const plus = sel.join(",");
+    return minus.length < plus.length ? minus : plus;
+  };
+
+  function update() {
+    const where = form.where.value, rel = form.rel.value;
+    $("#slurmBox").hidden = where !== "slurm";
+    $("#relBox").hidden = rel !== "date";
+
+    $("#offlineBox").hidden = !v("offline").checked;
+    v("fulltext").disabled = !v("triage").checked;
+    $("#fulltextOpt").classList.toggle("disabled", !v("triage").checked);
+    const prevFiles = v("prevFiles").value.split("\n").map(s => s.trim()).filter(Boolean);
+    const comparing = prevFiles.length > 0;
+    document.querySelectorAll('[data-newonly="1"]').forEach(l => l.classList.toggle("disabled", !comparing));
+    // without a comparison the new-only files are skipped anyway, so they never lengthen the command
+    const counts = f => comparing || !A.splits.find(x => x.name === f).new_only;
+    const pick = (pre, deflt) => FILES.filter(f => counts(f) ? v(pre + f).checked : deflt.includes(f));
+    const csvSel = pick("csv-", A.default_csv), xlsSel = pick("xls-", A.default_excel);
+
+    const args = [], say = [], warn = [];
+    if (where === "slurm") {
+      args.push("--slurm");
+      for (const [id, flag] of [["time", "--time"], ["mem", "--mem"], ["partition", "--partition"], ["account", "--account"]])
+        if (v(id).value.trim()) args.push(flag, q(v(id).value.trim()));
+      say.push(`Submit a SLURM job (time limit ${v("time").value.trim() || "8 hours"}).`);
+    } else say.push("Run on this computer.");
+    if (v("cores").value) args.push("--cores", String(parseInt(v("cores").value, 10)));
+    if (v("workdir").value.trim()) { args.push("--workdir", q(v("workdir").value.trim())); say.push(`Write results, caches and logs to ${v("workdir").value.trim()}.`); }
+    if (rel === "date") {
+      const d = v("release").value.trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) warn.push("Enter the release date as YYYY-MM-DD.");
+      else { args.push("--release", d); say.push(`Process the GWAS Catalog release of ${d}.`); }
+    } else say.push("Process the latest GWAS Catalog release.");
+    if (comparing) {
+      for (const f of prevFiles) args.push("--previous", q(f));
+      say.push(`Mark variants in ${prevFiles.length === 1 ? "the earlier import" : prevFiles.length + " earlier imports"} as not new; write the new-only files.`);
+    } else say.push("Treat every record as new.");
+    const rp = v("relPath").value.trim();
+    if (rp) { args.push("--compare-release", q(rp)); say.push(`Stop if records fell by over 10% since ${rp}.`); }
+
+    const csvDefault = listArg(A.default_csv), xlsDefault = listArg(A.default_excel);
+    if (!csvSel.length && !xlsSel.length) warn.push("Choose at least one output file.");
+    if (listArg(csvSel) !== csvDefault) args.push("--csv", listArg(csvSel));
+    if (listArg(xlsSel) !== xlsDefault) args.push("--excel", listArg(xlsSel));
+    if (v("gzip").checked && csvSel.length) args.push("--gzip");
+    const usable = f => comparing || !A.splits.find(x => x.name === f).new_only;
+    const nC = csvSel.filter(usable).length, nX = xlsSel.filter(usable).length;
+    if (nC) say.push(`Write ${nC} file${nC > 1 ? "s" : ""} as ${v("gzip").checked ? "compressed CSV" : "CSV"}.`);
+    if (nX) say.push(`Write ${nX} file${nX > 1 ? "s" : ""} as Excel${nX > 3 ? " (slow for the large files)" : ""}.`);
+    if ((csvSel.length + xlsSel.length) && !comparing && [...csvSel, ...xlsSel].some(f => !usable(f)))
+      say.push("The new-only files are skipped without a comparison.");
+    const cols = ALLCOLS.filter(c => v("col-" + c).checked);
+    if (!cols.length) warn.push("Choose at least one column.");
+    else if (cols.length !== ALLCOLS.length) { args.push("--columns", cols.join(",")); say.push(`Keep ${cols.length} of 30 columns (the AGMP import needs all 30).`); }
+    else say.push("Keep all 30 standard columns.");
+
+    for (const [id, flag, text] of [["rescue", "--no-rescue", "Leave positional IDs unconverted."],
+        ["flank", "--no-flanking", "No nearest genes for converted intergenic variants."],
+        ["vep", "--no-vep", "Do not fill missing consequences."],
+        ["countryRoute", "--no-country-route", "Leave out studies included only for recruiting in Africa."],
+        ["descRoute", "--no-description-route", "Leave out studies included only for their sample description."],
+        ["triage", "--no-triage", "Skip the curation queue."]])
+      if (!v(id).checked) { args.push(flag); say.push(text); }
+    if (v("triage").checked && !v("fulltext").checked) { args.push("--no-fulltext"); say.push("Curation queue from abstracts only."); }
+    if (v("keepPos").checked) { args.push("--keep-unresolved-positional"); say.push("Keep unconverted positional IDs."); }
+    if (v("offline").checked) {
+      if (rel !== "date") warn.push("Offline runs need a specific release.");
+      const a = v("locAssoc").value.trim(), b = v("locAnc").value.trim();
+      if (!a || !b) warn.push("Give both local GWAS Catalog files.");
+      else { args.push("--local-associations", q(a), "--local-ancestry", q(b)); say.push("Read the Catalog from local files."); }
+    }
+    if (v("dry").checked) { args.push("--dry-run"); say.unshift("Dry run: change nothing."); }
+    if (v("rebuild").checked) { args.push("--rebuild"); say.push("Rebuild the release even if it exists."); }
+    if (v("unlock").checked) { args.push("--unlock"); say.unshift("Only clear the lock from an interrupted run."); }
+
+    const parts = []; let cur = "./agmp_gwas run";
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i], next = args[i + 1];
+      const piece = a.startsWith("--") && next !== undefined && !next.startsWith("--") ? a + " " + args[++i] : a;
+      if ((cur + " " + piece).length > 56) { parts.push(cur); cur = "  " + piece; } else cur += " " + piece;
+    }
+    parts.push(cur);
+    $("#cmd").textContent = parts.join(" \\\n");
+    $("#summary").innerHTML = say.map(s => `<li>${esc(s)}</li>`).join("");
+    $("#warn").innerHTML = warn.map(w => `<div class="warn">${esc(w)}</div>`).join("");
+    try { localStorage.setItem("agmp-gwas-builder", JSON.stringify(save())); } catch (e) {}
+  }
+  function save() {
+    const s = {};
+    form.querySelectorAll("input, textarea").forEach(i => {
+      if (i.type === "radio") { if (i.checked) s[i.name] = i.value; }
+      else if (i.type === "checkbox") s[i.id] = i.checked; else s[i.id] = i.value;
+    });
+    return s;
+  }
+  function load(s) {
+    form.querySelectorAll("input, textarea").forEach(i => {
+      if (i.type === "radio") { if (s[i.name] !== undefined) i.checked = s[i.name] === i.value; }
+      else if (i.type === "checkbox") { if (s[i.id] !== undefined) i.checked = s[i.id]; }
+      else if (s[i.id] !== undefined) i.value = s[i.id];
+    });
+  }
+  const defaults = save();
+  try { const s = JSON.parse(localStorage.getItem("agmp-gwas-builder") || "null"); if (s) load(s); } catch (e) {}
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  $("#reset").addEventListener("click", () => { load(defaults); update(); });
+  $("#copy").addEventListener("click", async e => {
+    try { await navigator.clipboard.writeText($("#cmd").textContent); e.target.textContent = "Copied"; }
+    catch (err) { const r = document.createRange(); r.selectNodeContents($("#cmd")); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = "Press Ctrl/Cmd+C"; }
+    setTimeout(() => (e.target.textContent = "Copy command"), 1500);
+  });
+  update();
+})();
+</script>
+</body>
+</html>

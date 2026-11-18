@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGMP_GWAS Report</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #ffffff; --surface-2: #f0f9ff; --tint-2: #f8fafc; --border: transparent;
+  --text-primary: #0b1220; --text-secondary: #334155; --text-muted: #64748b;
+  --series-1: #0284c7; --mark-muted: #cfe8f7; --grid: #e6f2fa;
+  --good: #0ca30c; --warning: #fab219; --critical: #d03b3b; --info: #94a3b8;
+  --accent-ink: #0369a1; --code-bg: #f0f9ff; --sky: #0ea5e9; --sky-soft: #e0f2fe;
+  --pill: #0369a1; --pill-ink: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #07111c; --surface-2: #0d1c2b; --tint-2: #0b1724;
+    --text-primary: #e8f1f8; --text-secondary: #b6c4d2; --text-muted: #8193a6;
+    --series-1: #38bdf8; --mark-muted: #16364d; --grid: #102233;
+    --accent-ink: #7dd3fc; --code-bg: #0d1c2b; --sky: #38bdf8; --sky-soft: #0c3550; --pill: #38bdf8; --pill-ink: #07111c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #07111c; --surface-2: #0d1c2b; --tint-2: #0b1724;
+  --text-primary: #e8f1f8; --text-secondary: #b6c4d2; --text-muted: #8193a6;
+  --series-1: #38bdf8; --mark-muted: #16364d; --grid: #102233;
+  --accent-ink: #7dd3fc; --code-bg: #0d1c2b; --sky: #38bdf8; --sky-soft: #0c3550; --pill: #38bdf8; --pill-ink: #07111c;
+}
+* { box-sizing: border-box; }
+html { font-size: clamp(15px, 0.38vw + 10.5px, 22px); scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--page); color: var(--text-primary);
+  font: 1rem/1.55 "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-ink); text-underline-offset: 3px; }
+mark { background: var(--mark); color: inherit; padding: 0 .1em; }
+code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .88em; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+.wrap { width: min(100% - 2 * clamp(1.1rem, 4vw, 5rem), 118rem); margin: 0 auto; }
+header.top { padding: 80px 0 20px; text-align: center; }
+header.top h1 em { font-style: normal; color: var(--sky); }
+header.top mark, section > h2 mark { background: var(--sky-soft); color: inherit; border-radius: 8px; padding: 0 .12em; }
+header.top h1 { margin: 0 0 12px; font-weight: 400; font-size: clamp(44px, 7.5vw, 84px); letter-spacing: -0.05em; line-height: 1; }
+header.top p { margin: 0 auto; color: var(--text-primary); max-width: 42rem; font-size: 1.067rem; }
+.meta-line { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; margin-top: 16px; font-size: 0.867rem; color: var(--text-muted); }
+/* numbered top navigation */
+.topnav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.topnav .in { width: min(100% - 2 * clamp(1.1rem, 4vw, 5rem), 118rem); margin: 0 auto; height: 4.2rem; display: flex; align-items: center; gap: 16px; }
+.topnav .brand { font-size: 1.133rem; letter-spacing: -0.03em; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
+.topnav .brand i { width: 11px; height: 11px; border-radius: 50%; background: var(--sky); display: inline-block; }
+.topnav .links { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: 1; justify-content: flex-end; }
+.topnav .links::-webkit-scrollbar { display: none; }
+.topnav .links a, .topnav .links button { font: 0.9rem "Helvetica Neue", Helvetica, sans-serif; color: var(--text-secondary); text-decoration: none;
+  white-space: nowrap; padding: 7px 11px; border-radius: 999px; border: 0; background: none; cursor: pointer; display: flex; gap: 6px; align-items: baseline; }
+.topnav .links a b { font-weight: 400; font-size: 0.733rem; color: var(--accent-ink); }
+.topnav .links a:hover, .topnav .links button:hover { background: var(--surface-2); color: var(--text-primary); }
+.topnav .links a.on { background: var(--sky-soft); color: var(--text-primary); }
+button, .btn { font: inherit; font-size: 0.867rem; color: var(--text-primary); background: var(--surface-2); border: 0;
+  border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+button:hover { background: var(--sky-soft); }
+button.primary { background: var(--pill); border-color: var(--pill); color: var(--pill-ink); }
+button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid #2f6bff; outline-offset: 2px; }
+section { padding: clamp(4rem, 9vh, 7rem) 0 .5rem; }
+section > .n { display: block; text-align: center; font-size: clamp(56px, 7vw, 90px); font-weight: 200; line-height: .9; letter-spacing: -0.06em; color: var(--sky); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+section > h2 { font-size: clamp(32px, 4.6vw, 50px); font-weight: 400; letter-spacing: -0.045em; line-height: 1.05; margin: 0 0 12px; text-align: center; }
+section > p.lead { margin: 0 auto 2rem; color: var(--text-secondary); max-width: 46rem; text-align: center; font-size: 1.067rem; }
+.card { background: none; border: 0; padding: 0; }
+.grid { display: grid; gap: 44px 48px; }
+.statgrid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+.tile .num { font-size: clamp(34px, 3.8vw, 50px); font-weight: 300; color: var(--text-primary); letter-spacing: -0.045em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .lbl { font-size: 0.933rem; color: var(--text-primary); margin-top: 4px; }
+.tile .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.charts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); }
+.chart-card h3 { margin: 0; font-size: 1.133rem; font-weight: 400; letter-spacing: -0.01em; }
+.chart-card .hint { font-size: 0.8rem; color: var(--text-muted); margin: 2px 0 12px; }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.chart-head button { font-size: 0.8rem; padding: 3px 10px; flex-shrink: 0; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart text { font-size: 0.8rem; fill: var(--text-secondary); font-family: inherit; }
+.chart text.val { fill: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bar-row { cursor: pointer; }
+.bar-row:hover .hit { fill: var(--surface-2); }
+.filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-bottom: 26px; min-height: 34px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--sky-soft); color: var(--text-primary); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 0.867rem; }
+.chip button { border: 0; background: transparent; padding: 0 4px; font-size: 1.0rem; line-height: 1; color: var(--text-primary); }
+.filters .count { font-size: 0.867rem; color: var(--text-secondary); margin-right: 6px; }
+.filters .count b { color: var(--text-primary); font-variant-numeric: tabular-nums; font-weight: 500; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 10px 12px; vertical-align: top; }
+th { font-weight: 500; font-size: 0.767rem; text-transform: uppercase; letter-spacing: .07em; color: var(--accent-ink); background: var(--page); position: sticky; top: 0; }
+tbody tr:hover td { color: var(--accent-ink); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-scroll { overflow: auto; max-height: 460px; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; font-size: 0.8rem; white-space: nowrap; }
+.status .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-size: 0.733rem; font-weight: 700; }
+.status.PASS .dot { background: var(--good); }
+.status.WARN .dot { background: var(--warning); color: #1a1a19; }
+.status.FAIL .dot { background: var(--critical); }
+.status.INFO .dot { background: var(--info); }
+.qc-filter { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; justify-content: center; }
+.qc-filter button[aria-pressed="true"] { background: var(--pill); color: var(--pill-ink); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } .sticky-side { position: static; } }
+.colgroup h4 { margin: 18px 0 6px; font-size: 0.733rem; color: var(--accent-ink); text-transform: uppercase; letter-spacing: .08em; font-weight: 500; }
+.colgroup h4:first-child { margin-top: 0; }
+label.colpick { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 2px 8px; align-items: start; padding: 7px 0; cursor: pointer; }
+label.colpick:hover .nm { color: var(--accent-ink); }
+label.colpick input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--pill); }
+label.colpick .nm { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.867rem; }
+label.colpick .ds { grid-column: 2 / 4; font-size: 0.8rem; color: var(--text-muted); }
+label.colpick .pct { font-size: 0.8rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
+.toolbar .sel { font-size: 0.867rem; color: var(--text-secondary); margin-left: auto; }
+pre.cmd { background: none; position: relative; padding-left: 20px !important; border-radius: 14px; padding: 14px 16px; font: 0.867rem/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.cmd-wrap { position: relative; }
+.cmd-wrap pre.cmd { padding-right: 80px; min-height: 48px; }
+pre.cmd::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: var(--sky); }
+.cmd-wrap button { position: absolute; top: 9px; right: 9px; background: var(--pill); color: var(--pill-ink); }
+.note { font-size: 0.867rem; color: var(--text-secondary); margin: 8px 0 0; }
+.sticky-side { position: sticky; top: 20px; }
+.side-box { padding: 0; }
+#tooltip { position: fixed; pointer-events: none; z-index: 20; background: var(--page); color: var(--text-primary);
+  border: 0; box-shadow: 0 8px 28px rgba(3, 105, 161, .18); border-radius: 12px; padding: 9px 11px; font-size: 0.8rem; opacity: 0; transition: opacity .08s; max-width: 300px; }
+#tooltip b { font-variant-numeric: tabular-nums; font-weight: 500; }
+#tooltip .t { font-weight: 500; margin-bottom: 2px; }
+footer { padding: 60px 0 40px; color: var(--text-muted); font-size: 0.833rem; text-align: center; }
+details summary { cursor: pointer; color: var(--text-primary); }
+.empty { color: var(--text-muted); font-size: 0.867rem; padding: 8px 0; }
+
+/* sections fade in as they arrive */
+.js section > * { opacity: 0; transform: translateY(1.6rem); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+.js section.in > * { opacity: 1; transform: none; }
+.progress { position: fixed; left: 0; top: 0; height: 3px; width: 100%; z-index: 40; transform-origin: 0 50%; transform: scaleX(var(--p, 0)); background: var(--sky); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .js section > * { opacity: 1; transform: none; transition: none; } }
+</style>
+</head>
+<body>
+<div id="tooltip" role="status" aria-live="polite"></div>
+
+<header class="topnav"><div class="in"><span class="brand"><i aria-hidden="true"></i>AGMP_GWAS</span><nav class="links" id="tilebar" aria-label="Report sections"></nav></div></header>
+<header class="top"><div class="wrap">
+  <h1>AGMP<em>_</em>GWAS report</h1>
+  <p>GWAS Catalog associations relevant to African populations and the diaspora, curated for the African Genomic Medicine Portal.</p>
+  <div class="meta-line" id="metaLine"></div>
+</div></header>
+
+
+<main class="wrap">
+
+<section id="summary">
+  <span class="n">01</span>
+  <h2>Summary</h2>
+  <p class="lead" id="summaryLead"></p>
+  <div class="grid statgrid" id="tiles"></div>
+</section>
+
+<section id="qc">
+  <span class="n">02</span>
+  <h2>Quality <mark>checks</mark></h2>
+  <p class="lead">The export runs only when every check marked FAIL passes. WARN means worth a look but not blocking; INFO is for context.</p>
+  <div class="qc-filter" id="qcFilter" role="group" aria-label="Filter checks by status"></div>
+  <div class="table-scroll" style="max-height:none"><table id="qcTable"></table></div>
+</section>
+
+<section id="explore">
+  <span class="n">03</span>
+  <h2>Explore the <mark>records</mark></h2>
+  <p class="lead">Click any bar to filter every other chart to those records; click again to remove it. Hover for exact numbers. A record naming two regions counts once in each region.</p>
+  <div class="filters" id="filters"></div>
+  <div class="grid charts" id="charts"></div>
+  <div class="card chart-card" style="margin-top:16px">
+    <div class="chart-head"><div><h3>Top phenotypes</h3><p class="hint">All records (not affected by the filters above)</p></div></div>
+    <div class="table-scroll"><table id="phenTable"></table></div>
+  </div>
+</section>
+
+<section id="completeness">
+  <span class="n">04</span>
+  <h2>Column <mark>completeness</mark></h2>
+  <p class="lead">Share of records with a value in each column. Hover a bar for its sources; show the table for every step that makes it. Low values are expected for some columns: ethnicity is filled only when a study reports it.</p>
+  <div class="card chart-card">
+    <div class="chart-head"><div><h3>Records with a value, by column</h3><p class="hint">Hover for counts and the column's meaning</p></div>
+      <button type="button" data-table-for="complChart">Show table</button></div>
+    <div class="chart" id="complChart"></div>
+  </div>
+</section>
+
+<section id="columns">
+  <span class="n">05</span>
+  <h2>Choose the <mark>columns</mark> for your files</h2>
+  <p class="lead">Tick the columns you want. The command below updates as you go: run it in the work directory (the folder that holds results/) to rewrite the output files with only those columns. Only the export step runs again; nothing is downloaded or rebuilt.</p>
+  <div class="cols">
+    <div>
+      <div class="toolbar">
+        <button type="button" id="colAll">All 30</button>
+        <button type="button" id="colNone">None</button>
+        <button type="button" id="colRun">As in this run</button>
+        <span class="sel" id="colCount"></span>
+      </div>
+      <div id="colList"></div>
+    </div>
+    <div>
+      <div class="sticky-side">
+        <div class="side-box">
+          <h3 style="margin:0 0 8px;font-size:17px;font-weight:400">Command</h3>
+          <div class="cmd-wrap"><pre class="cmd" id="colCmd"></pre><button type="button" id="copyCmd">Copy</button></div>
+          <p class="note" id="colNote"></p>
+        </div>
+        <div style="margin-top:24px">
+          <h3 style="margin:0 0 4px;font-size:17px;font-weight:400">Preview</h3>
+          <p class="note" style="margin:0 0 10px">A random sample of records with the chosen columns.</p>
+          <div class="table-scroll" style="max-height:340px"><table id="preview"></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="files">
+  <span class="n">06</span>
+  <h2>Output <mark>files</mark></h2>
+  <p class="lead">Written to the <code>export/</code> folder next to this report. Every file has the same columns; they differ in which records they hold.</p>
+  <div class="table-scroll" style="max-height:none"><table id="filesTable"></table></div>
+  <p class="note" id="filesNote"></p>
+</section>
+
+<section id="curation">
+  <span class="n">07</span>
+  <h2>Curation <mark>queue</mark></h2>
+  <p class="lead">Studies whose ancestry, recruitment country or ethnicity could not be resolved automatically, ranked by how much evidence the text-mining step found. Curators work from <code>curation_queue.tsv</code>, highest priority first.</p>
+  <div class="grid charts" id="queueCharts"></div>
+</section>
+
+<section id="settings">
+  <span class="n">08</span>
+  <h2>Settings <mark>used</mark></h2>
+  <p class="lead">The settings that differ from the defaults, saved as <code>run_settings.yaml</code> next to this report. Together with the release date and the container version, this is what you need to reproduce the run.</p>
+  <details class="card" style="max-width:760px;margin:0 auto"><summary>Show all settings</summary><pre class="cmd" id="settingsPre" style="margin-top:12px;max-height:420px;overflow:auto"></pre></details>
+</section>
+
+</main>
+<footer><div class="wrap" id="footer"></div></footer>
+
+<script>
+const DATA = /*__AGMP_DATA__*/null;
+(function () {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const el = (tag, attrs = {}, ...kids) => {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") e.className = v; else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+    }
+    for (const k of kids) if (k != null) e.append(k);
+    return e;
+  };
+  const fmt = n => Number(n).toLocaleString("en-US");
+  const pct = (a, b) => b ? (100 * a / b) : 0;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const SVGNS = "http://www.w3.org/2000/svg";
+  // chart geometry follows the root font size, so charts scale with the screen
+  const U = () => parseFloat(getComputedStyle(document.documentElement).fontSize) / 15;
+
+  // ------------------------------------------------ fade-in and progress
+  document.documentElement.classList.add("js");
+  const prog = el("div", {class: "progress", "aria-hidden": "true"}); document.body.append(prog);
+  addEventListener("scroll", () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    prog.style.setProperty("--p", max > 0 ? Math.min(1, scrollY / max) : 0);
+  }, {passive: true});
+  const secs = [...document.querySelectorAll("main section")];
+  if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
+      {rootMargin: "0px 0px -6% 0px", threshold: 0.02});
+    secs.forEach(x => io.observe(x));
+  } else secs.forEach(x => x.classList.add("in"));
+
+  // ------------------------------------------------- theme and tile bar
+  try { const t = localStorage.getItem("agmp-gwas-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  const SECTIONS = [["summary", "Summary"], ["qc", "Checks"], ["explore", "Explore"], ["completeness", "Completeness"],
+                    ["columns", "Columns"], ["files", "Files"], ["curation", "Curation"], ["settings", "Settings"]];
+  const bar = $("#tilebar");
+  bar.innerHTML = SECTIONS.map(([id, t], i) => `<a href="#${id}" data-id="${id}"><b>${String(i + 1).padStart(2, "0")}</b>${t}</a>`).join("") +
+    `<button type="button" id="themeBtn" aria-label="Switch light or dark theme">Light / dark</button>`;
+  $("#themeBtn").addEventListener("click", () => {
+    const cur = document.documentElement.dataset.theme ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("agmp-gwas-theme", next); } catch (e) {}
+  });
+  const secEls = SECTIONS.map(([id]) => document.getElementById(id));
+  let ticking = false;
+  const trackSection = () => {
+    ticking = false;
+    let cur = null;
+    for (const e of secEls) if (e.getBoundingClientRect().top <= innerHeight * 0.35) cur = e;
+    bar.querySelectorAll("a").forEach(a => a.classList.toggle("on", !!cur && a.dataset.id === cur.id));
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(trackSection); } }, {passive: true});
+  trackSection();
+
+  // -------------------------------------------------------------- tooltip
+  const tip = $("#tooltip");
+  function showTip(evt, html) {
+    tip.innerHTML = html; tip.style.opacity = 1;
+    const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = evt.clientX + pad, y = evt.clientY + pad;
+    if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+    if (y + h > innerHeight - 8) y = evt.clientY - h - pad;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  }
+  const hideTip = () => { tip.style.opacity = 0; };
+  addEventListener("scroll", hideTip, {passive: true});
+
+  // --------------------------------------------------------------- header
+  const T = DATA.tiles;
+  $("#metaLine").append(
+    el("span", {text: "GWAS Catalog release " + DATA.release}),
+    el("span", {text: "Run on " + (DATA.run_date || "")}),
+    el("span", {text: "Build time " + Math.round((DATA.runtime_seconds || 0) / 60) + " min"}),
+    el("span", {text: DATA.compared.length ? "Compared with " + DATA.compared.length + " previous file(s)" : "Not compared with earlier data"})
+  );
+  $("#summaryLead").textContent =
+    fmt(T.records) + " records from " + fmt(T.publications) + " publications, covering " + fmt(T.variants) +
+    " unique variants. A record is one variant–trait association in one study, for one gene.";
+  const tiles = [
+    ["Records", fmt(T.records), DATA.compared.length ? fmt(T.new_records) + " new" : "all marked new"],
+    ["Unique variants", fmt(T.variants), fmt(T.rescued_records) + " records from converted positional IDs"],
+    ["Studies", fmt(T.studies), "GWAS Catalog accessions"],
+    ["Publications", fmt(T.publications), "PubMed IDs"],
+    ["With a gene symbol", T.gene_symbol_pct + "%", "of records"],
+    ["With a variant consequence", T.context_pct + "%", "of records (context)"],
+    ["With ethnicity reported", T.ethnicity_pct + "%", "never inferred"],
+  ];
+  for (const [l, n, s] of tiles)
+    $("#tiles").append(el("div", {class: "card tile"}, el("div", {class: "num", text: n}),
+      el("div", {class: "lbl", text: l}), el("div", {class: "sub", text: s})));
+
+  // ------------------------------------------------------------------- QC
+  const ICON = {PASS: "✓", WARN: "!", FAIL: "✕", INFO: "i"};
+  const statusOf = r => (r.threshold === "info" ? "INFO" : r.status);
+  let qcShow = "all";
+  function renderQC() {
+    const t = $("#qcTable"); t.innerHTML = "";
+    t.append(el("thead", {}, el("tr", {}, el("th", {text: "Status"}), el("th", {text: "Check"}),
+      el("th", {text: "Value"}), el("th", {text: "Threshold"}))));
+    const tb = el("tbody");
+    for (const r of DATA.qc) {
+      const st = statusOf(r);
+      if (qcShow !== "all" && st !== qcShow) continue;
+      tb.append(el("tr", {},
+        el("td", {}, el("span", {class: "status " + st}, el("span", {class: "dot", "aria-hidden": "true", text: ICON[st]}), st)),
+        el("td", {text: r.check}), el("td", {class: "num", text: r.value}), el("td", {text: r.threshold})));
+    }
+    t.append(tb);
+  }
+  const qcCounts = {};
+  for (const r of DATA.qc) qcCounts[statusOf(r)] = (qcCounts[statusOf(r)] || 0) + 1;
+  for (const k of ["all", "FAIL", "WARN", "PASS", "INFO"]) {
+    if (k !== "all" && !qcCounts[k]) continue;
+    const b = el("button", {type: "button", "aria-pressed": String(k === "all"),
+      text: k === "all" ? "All (" + DATA.qc.length + ")" : k + " (" + qcCounts[k] + ")"});
+    b.addEventListener("click", () => {
+      qcShow = k; for (const x of $("#qcFilter").children) x.setAttribute("aria-pressed", String(x === b)); renderQC();
+    });
+    $("#qcFilter").append(b);
+  }
+  renderQC();
+
+  // ------------------------------------------------------- bar chart (h)
+  // items: [{key,label,value,title?}], opts: {total, selected:Set, onToggle, valueFmt}
+  function barChart(host, items, opts) {
+    host.innerHTML = "";
+    if (!items.length) { host.append(el("div", {class: "empty", text: "No records match the filters."})); return; }
+    const u = U();
+    const W = Math.max(280, host.clientWidth || 480), rowH = 26 * u, gap = 6 * u;
+    const labelW = Math.min(260 * u, Math.round(W * 0.42)), valW = 64 * u;
+    const plotW = Math.max(40, W - labelW - valW - 8);
+    const max = opts.max || Math.max(...items.map(d => d.value), 1);
+    const H = items.length * (rowH + gap);
+    const svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+    svg.setAttribute("role", "img"); svg.setAttribute("aria-label", opts.aria || "bar chart");
+    const anySel = opts.selected && opts.selected.size > 0;
+    items.forEach((d, i) => {
+      const y = i * (rowH + gap);
+      const g = document.createElementNS(SVGNS, "g");
+      if (opts.onToggle) {
+        g.setAttribute("class", "bar-row"); g.setAttribute("tabindex", "0"); g.setAttribute("role", "button");
+        g.setAttribute("aria-pressed", String(!!(opts.selected && opts.selected.has(d.key))));
+        g.setAttribute("aria-label", `${d.label}: ${fmt(d.value)}`);
+        g.addEventListener("click", () => opts.onToggle(d.key));
+        g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); opts.onToggle(d.key); } });
+      }
+      const hit = document.createElementNS(SVGNS, "rect");
+      hit.setAttribute("class", "hit"); hit.setAttribute("x", 0); hit.setAttribute("y", y - gap / 2);
+      hit.setAttribute("width", W); hit.setAttribute("height", rowH + gap); hit.setAttribute("rx", 6);
+      hit.setAttribute("fill", "transparent"); g.append(hit);
+      const lab = document.createElementNS(SVGNS, "text");
+      lab.setAttribute("x", labelW - 10); lab.setAttribute("y", y + rowH / 2 + 4); lab.setAttribute("text-anchor", "end");
+      let txt = d.label; const maxCh = Math.floor((labelW - 14 * u) / (6.2 * u));
+      if (txt.length > maxCh) txt = txt.slice(0, maxCh - 1) + "…";
+      lab.textContent = txt; g.append(lab);
+      const w = Math.max(d.value > 0 ? 2 : 0, plotW * d.value / max);
+      const bar = document.createElementNS(SVGNS, "path");
+      const r = Math.min(4, w / 2), x0 = labelW, bh = rowH - 8, by = y + 4;
+      bar.setAttribute("d", w <= 0 ? "" :
+        `M${x0},${by} H${x0 + w - r} Q${x0 + w},${by} ${x0 + w},${by + r} V${by + bh - r} Q${x0 + w},${by + bh} ${x0 + w - r},${by + bh} H${x0} Z`);
+      const on = !anySel || opts.selected.has(d.key);
+      bar.setAttribute("fill", on ? "var(--series-1)" : "var(--mark-muted)");
+      g.append(bar);
+      const val = document.createElementNS(SVGNS, "text");
+      val.setAttribute("class", "val"); val.setAttribute("x", x0 + w + 6); val.setAttribute("y", y + rowH / 2 + 4);
+      val.textContent = opts.valueFmt ? opts.valueFmt(d) : fmt(d.value); g.append(val);
+      g.addEventListener("mousemove", e => showTip(e, `<div class="t">${esc(d.label)}</div>` +
+        (d.title ? `<div>${esc(d.title)}</div>` : `<b>${fmt(d.value)}</b> records` +
+          (opts.total ? ` · ${pct(d.value, opts.total).toFixed(1)}% of ${fmt(opts.total)}` : "") +
+          (opts.onToggle ? `<div style="color:var(--text-muted);margin-top:2px">Click to ${opts.selected && opts.selected.has(d.key) ? "remove" : "add"} filter</div>` : ""))));
+      g.addEventListener("mouseleave", hideTip);
+      svg.append(g);
+    });
+    host.append(svg);
+  }
+
+  // ---------------------------------------------------- column chart (v)
+  function columnChart(host, items, opts) {
+    host.innerHTML = "";
+    if (!items.length) { host.append(el("div", {class: "empty", text: "No records match the filters."})); return; }
+    const u = U();
+    const W = Math.max(280, host.clientWidth || 480), H = 200 * u, padL = 46 * u, padB = 24 * u, padT = 8 * u;
+    const plotW = W - padL - 4, plotH = H - padB - padT;
+    const max = Math.max(...items.map(d => d.value), 1);
+    const step = plotW / items.length, bw = Math.max(2, step - 2);
+    const svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+    svg.setAttribute("role", "img"); svg.setAttribute("aria-label", opts.aria || "column chart");
+    const nice = (() => { const p = Math.pow(10, Math.floor(Math.log10(max))); const m = max / p; return (m <= 2 ? 0.5 : m <= 5 ? 1 : 2) * p; })();
+    for (let v = 0; v <= max; v += nice) {
+      const y = padT + plotH - plotH * v / max;
+      const ln = document.createElementNS(SVGNS, "line");
+      ln.setAttribute("x1", padL); ln.setAttribute("x2", W); ln.setAttribute("y1", y); ln.setAttribute("y2", y);
+      ln.setAttribute("stroke", "var(--grid)"); svg.append(ln);
+      const t = document.createElementNS(SVGNS, "text");
+      t.setAttribute("x", padL - 6); t.setAttribute("y", y + 4); t.setAttribute("text-anchor", "end");
+      t.textContent = v >= 1000 ? (v / 1000) + "k" : v; svg.append(t);
+    }
+    const anySel = opts.selected.size > 0;
+    const every = Math.ceil(items.length / Math.max(1, Math.floor(plotW / (42 * u))));
+    items.forEach((d, i) => {
+      const x = padL + i * step + 1, h = plotH * d.value / max, y = padT + plotH - h;
+      const g = document.createElementNS(SVGNS, "g");
+      g.setAttribute("class", "bar-row"); g.setAttribute("tabindex", "0"); g.setAttribute("role", "button");
+      g.setAttribute("aria-pressed", String(opts.selected.has(d.key)));
+      g.setAttribute("aria-label", `${d.label}: ${fmt(d.value)}`);
+      const hit = document.createElementNS(SVGNS, "rect");
+      hit.setAttribute("class", "hit"); hit.setAttribute("x", padL + i * step); hit.setAttribute("y", padT);
+      hit.setAttribute("width", step); hit.setAttribute("height", plotH); hit.setAttribute("fill", "transparent");
+      g.append(hit);
+      const r = Math.min(4, bw / 2, h);
+      const bar = document.createElementNS(SVGNS, "path");
+      bar.setAttribute("d", h <= 0 ? "" : `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${y + h} Z`);
+      bar.setAttribute("fill", !anySel || opts.selected.has(d.key) ? "var(--series-1)" : "var(--mark-muted)");
+      g.append(bar);
+      if (i % every === 0) {
+        const t = document.createElementNS(SVGNS, "text");
+        t.setAttribute("x", x + bw / 2); t.setAttribute("y", H - 6); t.setAttribute("text-anchor", "middle");
+        t.textContent = d.label; svg.append(t);
+      }
+      g.addEventListener("click", () => opts.onToggle(d.key));
+      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); opts.onToggle(d.key); } });
+      g.addEventListener("mousemove", e => showTip(e, `<div class="t">${esc(d.label)}</div><b>${fmt(d.value)}</b> records` +
+        (opts.total ? ` · ${pct(d.value, opts.total).toFixed(1)}%` : "")));
+      g.addEventListener("mouseleave", hideTip);
+      svg.append(g);
+    });
+    const base = document.createElementNS(SVGNS, "line");
+    base.setAttribute("x1", padL); base.setAttribute("x2", W); base.setAttribute("y1", padT + plotH); base.setAttribute("y2", padT + plotH);
+    base.setAttribute("stroke", "var(--text-muted)"); svg.append(base);
+    host.append(svg);
+  }
+
+  function dataTable(host, items, total) {
+    host.innerHTML = "";
+    const t = el("table", {}, el("thead", {}, el("tr", {}, el("th", {text: "Value"}),
+      el("th", {class: "num", text: "Records"}), el("th", {class: "num", text: "Share"}))));
+    const tb = el("tbody");
+    for (const d of items) tb.append(el("tr", {}, el("td", {text: d.label}),
+      el("td", {class: "num", text: d.title ? d.valueText : fmt(d.value)}),
+      el("td", {class: "num", text: d.title ? "" : pct(d.value, total).toFixed(1) + "%"})));
+    t.append(tb); host.append(el("div", {class: "table-scroll"}, t));
+  }
+
+  // ----------------------------------------------------- cross-filtering
+  const L = DATA.levels, DIMS = DATA.dims, CUBE = DATA.cube;
+  const DI = Object.fromEntries(DIMS.map((d, i) => [d, i]));
+  const NICE = {
+    route: {explicit: "African / GME ancestry label", label: "NR or Other ancestry label",
+            country: "Recruited in an African country", description: "Sample description names African samples"},
+    status: {explicit: "Explicit", unresolved: "Unresolved (for curation)"},
+    idsrc: {rsid: "rsID as reported", merged_updated: "Merged rsID, updated", positional_rescued: "Positional ID → rsID",
+            synonym: "Synonym rsID", positional: "Positional (kept as chr:pos)", interaction: "Interaction"},
+  };
+  const label = (dim, v) => (NICE[dim] && NICE[dim][v]) || v || "(blank)";
+  const CHARTS = [
+    {dim: "region", title: "Geographical region", hint: "AGMP region of the study population"},
+    {dim: "context", title: "Variant consequence", hint: "Where the variant lies relative to genes (context)"},
+    {dim: "route", title: "Why the study is included", hint: "Inclusion route of the study population"},
+    {dim: "status", title: "Ancestry status", hint: "Unresolved records are queued for manual curation"},
+    {dim: "idsrc", title: "Variant ID", hint: "How the record's rsID was obtained"},
+    {dim: "intergenic", title: "Intergenic", hint: "Variant outside any gene, or within one"},
+    {dim: "eth", title: "Ethnicity description", hint: "Whether the study gives one"},
+    {dim: "year", title: "Publication year", hint: "Records per year of publication", wide: true},
+  ];
+  const filters = Object.fromEntries(CHARTS.map(c => [c.dim, new Set()]));
+  const rowRegions = ri => DATA.region_combos[ri];
+  function passes(row, except) {
+    for (const c of CHARTS) {
+      const f = filters[c.dim]; if (c.dim === except || !f.size) continue;
+      if (c.dim === "region") {
+        if (!rowRegions(row[DI.region]).some(r => f.has(DATA.region_names[r]))) return false;
+      } else if (!f.has(L[c.dim][row[DI[c.dim]]])) return false;
+    }
+    return true;
+  }
+  function tally(dim) {
+    const m = new Map(); let total = 0;
+    for (const row of CUBE) {
+      if (!passes(row, dim)) continue;
+      const n = row[row.length - 1]; total += n;
+      if (dim === "region") for (const r of rowRegions(row[DI.region])) {
+        const k = DATA.region_names[r]; m.set(k, (m.get(k) || 0) + n);
+      }
+      else { const k = L[dim][row[DI[dim]]]; m.set(k, (m.get(k) || 0) + n); }
+    }
+    return {m, total};
+  }
+  const tableMode = {};
+  function chartCard(c) {
+    const host = el("div", {class: "chart", id: "ch-" + c.dim});
+    const btn = el("button", {type: "button", text: "Show table"});
+    btn.addEventListener("click", () => { tableMode[c.dim] = !tableMode[c.dim]; btn.textContent = tableMode[c.dim] ? "Show chart" : "Show table"; renderAll(); });
+    const card = el("div", {class: "card chart-card"},
+      el("div", {class: "chart-head"}, el("div", {}, el("h3", {text: c.title}), el("p", {class: "hint", text: c.hint})), btn), host);
+    if (c.wide) card.style.gridColumn = "1 / -1";
+    $("#charts").append(card);
+  }
+  CHARTS.forEach(chartCard);
+  function toggle(dim, key) { const f = filters[dim]; f.has(key) ? f.delete(key) : f.add(key); renderAll(); }
+  function filteredTotal() { let t = 0; for (const row of CUBE) if (passes(row, null)) t += row[row.length - 1]; return t; }
+  function renderAll() {
+    hideTip();
+    for (const c of CHARTS) {
+      const {m, total} = tally(c.dim);
+      let items = [...m.entries()].map(([k, v]) => ({key: k, label: c.dim === "year" ? k : label(c.dim, k), value: v}));
+      if (c.dim === "year") items.sort((a, b) => a.key.localeCompare(b.key));
+      else items.sort((a, b) => b.value - a.value);
+      // selected keys stay visible even at zero
+      for (const k of filters[c.dim]) if (!m.has(k)) items.push({key: k, label: label(c.dim, k), value: 0});
+      const host = $("#ch-" + c.dim);
+      if (tableMode[c.dim]) dataTable(host, items, total);
+      else if (c.dim === "year") columnChart(host, items, {total, selected: filters[c.dim], onToggle: k => toggle(c.dim, k), aria: c.title});
+      else barChart(host, items, {total, selected: filters[c.dim], onToggle: k => toggle(c.dim, k), aria: c.title});
+    }
+    const fb = $("#filters"); fb.innerHTML = "";
+    const tot = filteredTotal();
+    fb.append(el("span", {class: "count"}, el("b", {text: fmt(tot)}), " of " + fmt(T.records) + " records"));
+    let any = false;
+    for (const c of CHARTS) for (const k of filters[c.dim]) {
+      any = true;
+      const x = el("button", {type: "button", "aria-label": "Remove filter " + label(c.dim, k), text: "×"});
+      x.addEventListener("click", () => toggle(c.dim, k));
+      fb.append(el("span", {class: "chip"}, c.title + ": " + label(c.dim, k), x));
+    }
+    if (any) {
+      const r = el("button", {type: "button", text: "Clear all filters"});
+      r.addEventListener("click", () => { for (const c of CHARTS) filters[c.dim].clear(); renderAll(); });
+      fb.append(r);
+    } else fb.append(el("span", {class: "count", text: "· no filters (click a bar to add one)"}));
+  }
+
+  // phenotypes
+  (() => {
+    const t = $("#phenTable");
+    t.append(el("thead", {}, el("tr", {}, el("th", {text: "Phenotype"}), el("th", {class: "num", text: "Records"}),
+      el("th", {class: "num", text: "Variants"}), el("th", {class: "num", text: "Studies"}))));
+    const tb = el("tbody");
+    for (const [p, r, s, v] of DATA.phenotypes)
+      tb.append(el("tr", {}, el("td", {text: p}), el("td", {class: "num", text: fmt(r)}), el("td", {class: "num", text: fmt(v)}), el("td", {class: "num", text: fmt(s)})));
+    t.append(tb);
+  })();
+
+  // ------------------------------------------------------ completeness
+  let complTable = false;
+  function renderCompl() {
+    const host = $("#complChart");
+    const items = DATA.completeness.map(c => ({key: c.col, label: c.col, value: c.pct, title: null, c}));
+    if (complTable) {
+      host.innerHTML = "";
+      const t = el("table", {}, el("thead", {}, el("tr", {}, el("th", {text: "Column"}), el("th", {text: "Meaning"}),
+        el("th", {text: "Sources"}), el("th", {text: "How it is made"}),
+        el("th", {class: "num", text: "With a value"}), el("th", {class: "num", text: "Share"}))));
+      const tb = el("tbody");
+      for (const c of DATA.completeness) {
+        const ol = el("ol", {style: "margin:0;padding-left:16px"});
+        for (const st of c.steps) ol.append(el("li", {text: st}));
+        tb.append(el("tr", {}, el("td", {}, el("code", {text: c.col})), el("td", {text: c.desc}), el("td", {text: c.source}),
+          el("td", {}, ol), el("td", {class: "num", text: fmt(c.filled)}), el("td", {class: "num", text: c.pct.toFixed(1) + "%"})));
+      }
+      t.append(tb); host.append(el("div", {class: "table-scroll"}, t));
+      return;
+    }
+    barChart(host, items, {max: 100, aria: "Column completeness",
+      valueFmt: d => d.value.toFixed(1) + "%"});
+    host.querySelectorAll("g").forEach((g, i) => {
+      const c = DATA.completeness[i];
+      g.addEventListener("mousemove", e => showTip(e, `<div class="t">${esc(c.col)}</div><div>${esc(c.desc)}</div>` +
+        `<div style="margin-top:4px"><b>${fmt(c.filled)}</b> of ${fmt(T.records)} records (${c.pct.toFixed(1)}%)</div>` +
+        `<div style="color:var(--text-muted);margin-top:2px">From: ${esc(c.source)}</div>` +
+        `<div style="color:var(--text-muted);margin-top:2px">Show table for every step</div>`));
+    });
+  }
+  document.querySelector('[data-table-for="complChart"]').addEventListener("click", e => {
+    complTable = !complTable; e.target.textContent = complTable ? "Show chart" : "Show table"; renderCompl();
+  });
+
+  // ---------------------------------------------------- column chooser
+  const ALL = DATA.completeness.map(c => c.col);
+  const chosen = new Set(DATA.export_columns);
+  const groups = {};
+  for (const c of DATA.completeness) (groups[c.group] = groups[c.group] || []).push(c);
+  const ORDER = ["Variant", "Gene", "Association", "Population", "Publication", "Fixed"];
+  const list = $("#colList");
+  for (const g of ORDER.filter(g => groups[g])) {
+    const box = el("div", {class: "colgroup"}, el("h4", {text: g === "Fixed" ? "Fixed values" : g}));
+    for (const c of groups[g]) {
+      const cb = el("input", {type: "checkbox", value: c.col});
+      cb.checked = chosen.has(c.col);
+      cb.addEventListener("change", () => { cb.checked ? chosen.add(c.col) : chosen.delete(c.col); renderCols(); });
+      box.append(el("label", {class: "colpick"}, cb, el("span", {class: "nm", text: c.col}),
+        el("span", {class: "pct", text: c.pct.toFixed(0) + "% filled"}), el("span", {class: "ds", text: c.desc})));
+    }
+    list.append(box);
+  }
+  const setAll = s => { chosen.clear(); s.forEach(c => chosen.add(c)); list.querySelectorAll("input").forEach(i => i.checked = chosen.has(i.value)); renderCols(); };
+  $("#colAll").addEventListener("click", () => setAll(ALL));
+  $("#colNone").addEventListener("click", () => setAll([]));
+  $("#colRun").addEventListener("click", () => setAll(DATA.export_columns));
+  function renderCols() {
+    const cols = ALL.filter(c => chosen.has(c));
+    $("#colCount").textContent = cols.length + " of " + ALL.length + " selected";
+    let cmd, note;
+    if (!cols.length) { cmd = "# Choose at least one column"; note = ""; }
+    else {
+      cmd = "./agmp_gwas run --release " + DATA.release + (cols.length === ALL.length ? " --columns all" : " --columns " + cols.join(","));
+      if (DATA.compared.length) cmd += DATA.compared.map(p => " --previous " + p).join("");
+      note = cols.length === ALL.length ? "All 30 standard AGMP columns, in the standard order."
+        : "Columns are always written in the standard AGMP order. Files for the AGMP import need all 30.";
+    }
+    $("#colCmd").textContent = cmd; $("#colNote").textContent = note;
+    const pv = $("#preview"); pv.innerHTML = "";
+    if (!cols.length) return;
+    const idx = cols.map(c => DATA.sample.columns.indexOf(c));
+    pv.append(el("thead", {}, el("tr", {}, ...cols.map(c => el("th", {text: c})))));
+    const tb = el("tbody");
+    for (const r of DATA.sample.rows.slice(0, 25))
+      tb.append(el("tr", {}, ...idx.map(i => { const v = String(r[i] ?? ""); return el("td", {title: v, text: v.length > 60 ? v.slice(0, 59) + "…" : v}); })));
+    pv.append(tb);
+  }
+  $("#copyCmd").addEventListener("click", async e => {
+    const txt = $("#colCmd").textContent;
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copied"; }
+    catch (err) { const r = document.createRange(); r.selectNodeContents($("#colCmd")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Press Ctrl/Cmd+C"; }
+    setTimeout(() => e.target.textContent = "Copy", 1600);
+  });
+
+  // ------------------------------------------------------------- files
+  (() => {
+    const t = $("#filesTable");
+    t.append(el("thead", {}, el("tr", {}, el("th", {text: "File"}), el("th", {text: "Holds"}),
+      el("th", {class: "num", text: "Records"}), el("th", {class: "num", text: "MB"}))));
+    const tb = el("tbody");
+    for (const m of DATA.manifest)
+      tb.append(el("tr", {}, el("td", {}, el("code", {text: m.file})), el("td", {text: DATA.splits_help[m.split] || m.split}),
+        el("td", {class: "num", text: fmt(m.rows)}), el("td", {class: "num", text: m.mb})));
+    t.append(tb);
+    $("#filesNote").textContent = DATA.compared.length ? "" :
+      "The new-only files (" + DATA.new_only.join(", ") + ") are written only when the run compares against previously imported data (--previous).";
+  })();
+
+  // ------------------------------------------------------------- queue
+  (() => {
+    const host = $("#queueCharts");
+    if (!DATA.queue) { host.append(el("p", {class: "empty", text: "The curation queue was not run (--no-triage)."})); return; }
+    const issues = {ancestry: "Ancestry", origin: "Recruitment country", ethnicity: "Ethnicity"};
+    for (const [iss, title] of Object.entries(issues)) {
+      const rows = DATA.queue.filter(q => q.issue === iss);
+      if (!rows.length) continue;
+      const items = ["high", "medium", "low"].map(p => ({key: p, label: p[0].toUpperCase() + p.slice(1) + " priority",
+        value: (rows.find(r => r.priority === p) || {studies: 0}).studies}));
+      const h = el("div", {class: "chart"});
+      host.append(el("div", {class: "card chart-card"}, el("div", {class: "chart-head"},
+        el("div", {}, el("h3", {text: title}), el("p", {class: "hint", text: "Studies with an unresolved " + title.toLowerCase()}))), h));
+      requestAnimationFrame(() => barChart(h, items, {aria: title, valueFmt: d => fmt(d.value) + " studies"}));
+      h._items = items;
+    }
+  })();
+
+  $("#settingsPre").textContent = DATA.settings_yaml || "(not recorded)";
+  $("#footer").innerHTML = "Made by AGMP_GWAS. Sources: " +
+    Object.values(DATA.sources).map(s => esc((s.url || s.path || "").split("/").pop()) + (s.last_modified ? " (" + esc(s.last_modified) + ")" : "")).join(", ") + ".";
+
+  renderAll(); renderCompl(); renderCols();
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => {
+    renderAll(); renderCompl();
+    document.querySelectorAll("#queueCharts .chart").forEach(h => h._items && barChart(h, h._items, {valueFmt: d => fmt(d.value) + " studies"}));
+  }, 150); });
+})();
+</script>
+</body>
+</html>
